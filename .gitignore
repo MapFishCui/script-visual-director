@@ -1,0 +1,48 @@
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+/build/
+/dist/
+
+# Local credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+.python-version
+
+# Generated production projects, renders and scratch files
+# Keep actual productions here or outside this skill repository.
+/outputs/
+/work/
+/runs/
+/render-output/
+*.blend1
+*.blend2
+*.log
+**/review/write.lock
+
+# OS and editor files
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Deliberately keep requirements.lock, agents/, assets/, examples/,
+# reference documentation and source media used by templates tracked.

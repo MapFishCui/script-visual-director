@@ -1,0 +1,280 @@
+{
+  "schema_version": 1,
+  "id": "LOC_001",
+  "version": 1,
+  "name": "回家发现一封信 · 客厅布局",
+  "units": "m",
+  "extent": [
+    7,
+    5
+  ],
+  "height": 2.8,
+  "assumptions": [
+    "房间尺寸、陈设和机位为设计假设，非剧本事实。",
+    "图中门板为打开状态，墙体已为入口留洞。"
+  ],
+  "boxes": [
+    {
+      "id": "W1",
+      "label": "左侧墙",
+      "kind": "wall",
+      "center": [
+        0.08,
+        2.5,
+        1.4
+      ],
+      "size": [
+        0.16,
+        5,
+        2.8
+      ],
+      "rotation": 0,
+      "solid": true,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    },
+    {
+      "id": "W2",
+      "label": "后侧墙",
+      "kind": "wall",
+      "center": [
+        3.5,
+        4.92,
+        1.4
+      ],
+      "size": [
+        7,
+        0.16,
+        2.8
+      ],
+      "rotation": 0,
+      "solid": true,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    },
+    {
+      "id": "W3",
+      "label": "右侧墙",
+      "kind": "wall",
+      "center": [
+        6.92,
+        2.5,
+        1.4
+      ],
+      "size": [
+        0.16,
+        5,
+        2.8
+      ],
+      "rotation": 0,
+      "solid": true,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    },
+    {
+      "id": "W4",
+      "label": "入口左墙段",
+      "kind": "wall",
+      "center": [
+        0.8,
+        0.08,
+        1.4
+      ],
+      "size": [
+        1.6,
+        0.16,
+        2.8
+      ],
+      "rotation": 0,
+      "solid": true,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    },
+    {
+      "id": "W5",
+      "label": "入口右墙段",
+      "kind": "wall",
+      "center": [
+        4.7,
+        0.08,
+        1.4
+      ],
+      "size": [
+        4.6,
+        0.16,
+        2.8
+      ],
+      "rotation": 0,
+      "solid": true,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    },
+    {
+      "id": "DOOR",
+      "label": "入口门板（打开）",
+      "kind": "door",
+      "center": [
+        1.65,
+        0.53,
+        1.05
+      ],
+      "size": [
+        0.06,
+        0.9,
+        2.1
+      ],
+      "rotation": 0,
+      "solid": true,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    },
+    {
+      "id": "TABLE",
+      "label": "放置信封的桌子",
+      "kind": "furniture",
+      "center": [
+        4.4,
+        2.8,
+        0.4
+      ],
+      "size": [
+        1.4,
+        0.9,
+        0.8
+      ],
+      "rotation": 0,
+      "solid": true,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    },
+    {
+      "id": "SOFA",
+      "label": "沙发",
+      "kind": "furniture",
+      "center": [
+        1.3,
+        3.8,
+        0.45
+      ],
+      "size": [
+        1.8,
+        0.8,
+        0.9
+      ],
+      "rotation": 0,
+      "solid": true,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    },
+    {
+      "id": "LETTER",
+      "label": "无字信封",
+      "kind": "prop",
+      "center": [
+        4.4,
+        2.8,
+        0.815
+      ],
+      "size": [
+        0.22,
+        0.11,
+        0.03
+      ],
+      "rotation": 0,
+      "solid": false,
+      "source": {
+        "basis": "proposed",
+        "text": "用于检验空间关系的设计布局"
+      }
+    }
+  ],
+  "cameras": [
+    {
+      "id": "CAM_001",
+      "shot": "SHOT_001",
+      "position": [
+        5.8,
+        1.2,
+        1.5
+      ],
+      "target": [
+        2.1,
+        1,
+        1.2
+      ],
+      "yfov": 55,
+      "aspect": 1.7777777777777777,
+      "path": [],
+      "source": {
+        "basis": "proposed",
+        "text": "服务于进入空间或发现信封"
+      }
+    },
+    {
+      "id": "CAM_002",
+      "shot": "SHOT_002",
+      "position": [
+        4.4,
+        1.4,
+        1.5
+      ],
+      "target": [
+        4.4,
+        2.8,
+        0.83
+      ],
+      "yfov": 55,
+      "aspect": 1.7777777777777777,
+      "path": [],
+      "source": {
+        "basis": "proposed",
+        "text": "服务于进入空间或发现信封"
+      }
+    }
+  ],
+  "paths": [
+    {
+      "id": "PATH_001",
+      "actor": "CHAR_001",
+      "shot": "SHOT_001",
+      "points": [
+        [
+          2.1,
+          0.25,
+          0
+        ],
+        [
+          2.5,
+          1.8,
+          0
+        ],
+        [
+          3.5,
+          2,
+          0
+        ]
+      ],
+      "clearance": 0.22,
+      "source": {
+        "basis": "proposed",
+        "text": "进入房间后走近桌子，避免不可信的远距离读信"
+      }
+    }
+  ]
+}

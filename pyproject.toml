@@ -1,0 +1,9 @@
+[project]
+name = "script-visual-director"
+version = "0.6.0"
+description = "Codex skill and local tools for narrative-driven visual asset production"
+requires-python = ">=3.9"
+dependencies = ["Pillow>=10,<12", "jsonschema>=4.23,<5", "PyYAML>=6,<7"]
+
+[tool.uv]
+package = false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "剧本视觉导演"
+  short_description: "从剧本分析、角色心理和空间分镜规划，制作可复用的影视视觉资产库"
+  default_prompt: "使用 $script-visual-director 分析我的剧本，规划文字分镜和必要的场景布局，并制作角色、场景与道具参考资产。"
+policy:
+  allow_implicit_invocation: true
