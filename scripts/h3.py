@@ -46,7 +46,7 @@ def validate(text, cuts, labels=()):
         elif i and not tail.startswith(' At '+timecode(cuts[i]['local_start'])+','):
             errors.append('H3切镜时刻必须匹配任务内时间')
     used = set(REF.findall(text))
-    if used-set(labels): errors.append('H3存在未绑定素材引用：'+', '.join(sorted(used-set(labels))))
+    if used-set(labels): errors.append('H3存在未绑定槽位：'+', '.join(sorted(used-set(labels))))
     subjects = set(re.findall(r'<Subject \d+>', sections['subject_definitions']))
     if set(re.findall(r'<Subject \d+>',text))-subjects:
         errors.append('H3存在未定义人物引用')

@@ -1,7 +1,7 @@
 import copy
 import unittest
-import h3
 import test_groups
+import h3
 import groups
 import review
 
@@ -42,10 +42,21 @@ class CompilerCase(unittest.TestCase):
         self.assertTrue(h3.validate(t+'\nsummary: duplicate',cuts,['<Picture 1>']))
         self.assertTrue(h3.validate(t.replace('</d>',''),cuts,['<Picture 1>']))
 
-class H3GateCase(test_groups.GroupsCase):
+class H3GateCase(unittest.TestCase):
+    setUp = test_groups.GroupsCase.setUp
+    finish = test_groups.GroupsCase.finish
+    all_done = test_groups.GroupsCase.all_done
+    init = test_groups.GroupsCase.init
+    packet = test_groups.GroupsCase.packet
+    audit_packet = test_groups.GroupsCase.audit_packet
+    audit = test_groups.GroupsCase.audit
+    ready = test_groups.GroupsCase.ready
+    plan = test_groups.GroupsCase.plan
+    compile_packet = test_groups.GroupsCase.compile_packet
+    synced = test_groups.GroupsCase.synced
     def test_h3_generic_cannot_bypass_format_gate(self):
         self.init()
-        review.configure(self.root,system={'name':'MiniMax-H3','mode':'Ref2VA','format':'official_guidance','sources':[]})
+        review.configure(self.root,system={'name':'MiniMax-H3','mode':'Ref2VA','format':'official_guidance','sources':['https://huggingface.co/MiniMaxAI/MiniMax-H3']})
         groups.apply(self.root,self.plan(adapter='generic'))
         p=self.compile_packet();p['groups'][0]['text']='unstructured prompt'
         with self.assertRaisesRegex(ValueError,'六部分'):groups.sync(self.root,p)
