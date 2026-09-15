@@ -59,15 +59,52 @@ $('editor').addEventListener('input',()=>{if(state)updateDirty();});$('editor').
 $('stay').onclick=()=>{$('unsaved').close();nextAction=null;};$('discardAndGo').onclick=()=>{sessionStorage.removeItem(draftKey());dirty=false;$('unsaved').close();const go=nextAction;nextAction=null;go?.();};$('saveAndGo').onclick=async()=>{if(await saveEdit()){$('unsaved').close();const go=nextAction;nextAction=null;go?.();}};
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 refresh();
-setInterval(async()=>{if(!state||busy||document.hidden)return;try{const incoming=await api('/api/state');if(incoming.revision!==state.revision){notice('项目有新版本。请先保存或复制当前编辑，再点击“刷新项目”查看。');}else if(incoming.display_fingerprint!==state.display_fingerprint){notice('资产、预演或交付资料有更新。请先保存当前编辑，再点击“刷新项目”查看。');}}catch(_){}},15000);
+function hasLocalEdits(){
+ if(dirty||document.activeElement?.matches('input,textarea,select'))return true;
+ for(let i=0;i<sessionStorage.length;i++){
+  const key=sessionStorage.key(i);
+  if(['svd-draft:','svd-group-draft:','svd-director-draft:'].some(prefix=>key.startsWith(prefix+state.name+':')))return true;
+ }
+ return false;
+}
+async function readLatestSafely(){
+ const incoming=await api('/api/state');
+ const changed=incoming.revision!==state.revision||incoming.display_fingerprint!==state.display_fingerprint;
+ if(changed&&!busy&&!hasLocalEdits()){
+  const openIds=[...document.querySelectorAll('details[id][open]')].map(node=>node.id);
+  state=incoming;render();for(const id of openIds)if($(id))$(id).open=true;
+  return true;
+ }
+ if(changed)notice('项目有新版本。已保留未保存草稿，请保存或复制编辑后点击“刷新项目”。');
+ return !changed;
+}
+async function navigateSection(id,label){
+ if(busy)return;
+ try{
+  const current=await readLatestSafely();
+  const target=$(id);
+  let message='已定位：'+label;
+  if(!target||target.closest('[hidden]'))message=current?'尚未生成'+label+'。请在当前 Codex 对话中继续制作。':'项目已有更新；请先保存或复制编辑，再刷新项目查看'+label+'。';
+  else{
+   for(let node=target;node;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
+   target.tabIndex=-1;target.focus({preventScroll:true});target.scrollIntoView({behavior:'smooth',block:'start'});
+   target.classList.remove('navigationTarget');void target.offsetWidth;target.classList.add('navigationTarget');
+   if(id==='assetGallery'&&!state.production?.total)message='资产尚未生成；这里会展示基准图与扩展资产。';
+  }
+  $('navigationStatus').textContent=message;notice(message);
+ }catch(e){$('navigationStatus').textContent='读取失败：'+e.message;notice(e.message,true);}
+}
+setInterval(async()=>{if(!state||busy||document.hidden)return;try{await readLatestSafely();}catch(_){}},15000);
 
 function renderQuality(){
  const q=shot().quality,box=$('quality');box.replaceChildren();
  if(!q){box.append(el('p','服务需要重启以启用导演检查。','muted'));$('approve').disabled=true;return;}
- box.append(el('strong',q.ready?'导演检查已通过，待你确认':q.review_status==='stale'?'上下文已改变，需要重新检查':'导演稿尚待完善与检查'));
+ box.append(el('strong',q.ready?'文字导演检查已通过，待你确认':q.review_status==='stale'?'上下文已改变，需要重新检查':'导演稿尚待完善与检查'));
  for(const msg of q.errors)box.append(el('p',msg,'qualityError'));
+ for(const f of q.findings||[]){const item=el('details');item.open=true;item.append(el('summary',`${sid} · ${f.rule} · ${labels[f.field]||f.field}`),el('pre',f.excerpt),el('p','修改建议：'+f.suggestion));box.append(item);}
  for(const msg of q.warnings)box.append(el('p','检查提示：'+msg,'muted'));
- if(q.review){box.append(el('p','全段节奏：'+q.review.sequence_note));const names={narrative:'叙事与信息',character:'人物心理与差异',performance:'表演与逐句语气',pacing:'节奏与时间',continuity:'动作与空间衔接',adaptation:'目标文本与对照'};for(const [k,c] of Object.entries(q.review.checks))box.append(el('p',names[k]+' · '+({pass:'通过',revise:'需修改',not_applicable:'不适用'}[c.status])+'：'+c.note));}
+ if(q.review){box.append(el('p','全段节奏：'+q.review.sequence_note));const names={narrative:'叙事与信息',character:'人物心理与差异',performance:'表演与逐句语气',pacing:'节奏与时间',continuity:'动作与空间衔接',adaptation:'目标文本与对照',standards:'直白表达、镜头顺序与官方格式'};for(const [k,c] of Object.entries(q.review.checks))box.append(el('p',names[k]+' · '+({pass:'通过',revise:'需修改',not_applicable:'不适用'}[c.status])+'：'+c.note));}
+ box.append(el('p','检查范围：剧情、人物、表演语气、节奏、连续性、目标适配、写作规范。通过仅代表当前版本文字审阅；未验证H3实际生成效果与三维空间。','muted'));
  box.append(el('p','保存后回 Codex 说“同步修改并检查节奏和表演”。字段完整不代表艺术质量；导演检查依据可在此查看。','muted'));
 }
 
@@ -119,7 +156,12 @@ function renderOverview(){
  box.append(phases);
  box.append(el('p','每次确认后回当前 Codex 对话说“继续”。页面不会自动调用模型。资产与交付资料覆盖整个项目，不随当前镜头筛选。','muted'));
  const nav=el('div',undefined,'actions');
- for(const [id,label] of [['shotList','分镜'],['generationGroups','生成分组'],['allResources','布局、预演与交付'],['assetGallery','资产审阅']]){const a=el('a',label);a.href='#'+id;a.onclick=e=>{e.preventDefault();const target=$(id);if(target?.tagName==='DETAILS')target.open=true;target?.scrollIntoView({behavior:'smooth'});};nav.append(a);}box.append(nav);
+ for(const [id,label] of [['shotList','分镜'],['generationGroups','生成分组'],['allResources','布局、预演与交付'],['assetGallery','资产审阅']]){const button=el('button',label,'secondary');button.type='button';button.onclick=()=>navigateSection(id,label);nav.append(button);}box.append(nav);
+ const issues=el('details');issues.id='projectIssues';
+ const problemShots=state.shots.filter(s=>!s.quality?.ready);
+ issues.append(el('summary',`全片导演检查 · ${problemShots.length} 镜待处理 / ${state.shots.length} 镜`));
+ for(const s of problemShots){const row=el('div');row.append(el('strong',s.id));for(const msg of s.quality?.errors||[])row.append(el('p',msg,'qualityError'));for(const f of s.quality?.findings||[])row.append(el('pre',f.excerpt),el('p','修改建议：'+f.suggestion));for(const [key,c] of Object.entries(s.quality?.review?.checks||{}))if(c.status==='revise')row.append(el('p',key+'：'+c.note,'qualityError'));if(!s.quality?.errors?.length)row.append(el('p','当前版本仍需完整导演检查，查看逐镜检查依据。','muted'));issues.append(row);}box.append(issues);
+ const navigationStatus=el('p',undefined,'muted');navigationStatus.id='navigationStatus';navigationStatus.setAttribute('role','status');box.append(navigationStatus);
  const gallery=el('details');gallery.id='assetGallery';gallery.open=state.pending.length===0;
  gallery.append(el('summary',`资产审阅 · 已完成 ${p?.completed??0} / ${p?.total??0}`));
  if(!p?.total)gallery.append(el('p','尚未登记资产需求。前置阶段确认完毕后，由 Codex 整理清单并生成基准图。','muted'));

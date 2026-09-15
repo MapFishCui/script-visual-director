@@ -84,7 +84,7 @@ dialogue 保留当前已确认改编稿的逐字台词（用户要求忠于原�
 
 每镜填齐 purpose、description、framing、action、camera、dialogue、continuity、psychology、performance、delivery、rhythm、duration。镜号与节拍、资产及已有布局版本仍保存在 manifest；未制作布局时注明待验证，不伪造机位验证结果。
 
-最终正文按 [三项分镜规范](three-part-storyboard.md) 组织为场景、人物运动、镜头运动；具体字段映射、旧稿整理与适配规则以该规范为准。先理解经历，再确定取景与表演；不将展示顺序误写成事件时序。
+最终正文按 [三项分镜规范](three-part-storyboard.md) 组织为场景、镜头运动、人物运动；具体字段映射、旧稿整理与适配规则以该规范为准。先理解经历，再确定取景与表演；不将展示顺序误写成事件时序。
 
 framing 写景别、观察方向与关键可见区域；action 写动作起止；camera 选定一种方案，运动时说明起幅、结束构图、幅度与速度。不能把“固定或推近”当定稿。一个取景无法同时展示远处钟面和近处书页时，拆镜或写明可行的运动/焦点转换，不能在一镜内暗藏多次切镜。
 

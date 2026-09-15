@@ -7,3 +7,6 @@
 .projectOverview{margin:18px 34px 0}.projectOverview details{margin-top:14px}.projectOverview .resources{max-height:480px;overflow:auto}@media(max-width:640px){.projectOverview{margin:12px 18px 0}}
 
 main[hidden]{display:none}
+
+.navigationTarget{scroll-margin-top:20px;animation:navigationPulse 1.8s ease-out} @keyframes navigationPulse{from{box-shadow:0 0 0 3px #87aa95}to{box-shadow:0 0 0 3px transparent}}
+@media(prefers-reduced-motion:reduce){.navigationTarget{animation:none;outline:2px solid #87aa95}}

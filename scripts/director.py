@@ -6,8 +6,8 @@ import re
 
 from core import indexed, safe_path
 
-VERSION = 1
-CHECKS = ('narrative', 'character', 'performance', 'pacing', 'continuity', 'adaptation')
+VERSION = 2
+CHECKS = ('narrative', 'character', 'performance', 'pacing', 'continuity', 'adaptation', 'standards')
 LABELS = {'purpose': '叙事目的', 'description': '画面描述', 'framing': '景别与机位',
           'action': '动作起止', 'camera': '运镜', 'dialogue': '台词与文字',
           'continuity': '镜头衔接', 'psychology': '人物心理', 'performance': '可见表演',
@@ -27,7 +27,29 @@ def inspect(shot):
         warnings.append('衔接仅指向外部文档，需核对本镜起止状态与相邻镜头。')
     if re.search(r'时长.{0,8}待|朗读.{0,6}待|未.{0,3}(?:估时|核对)', zh.get('rhythm', '')):
         warnings.append('节奏仍有待办，须说明台词、反应与阅读时间是否足够。')
-    return {'errors': errors, 'warnings': warnings}
+    findings = []
+    # These are explicit local wording rules, not a claim to validate all H3 semantics.
+    vague = {'留足后退空间': '写出取景范围，以及人物后退后是否仍在画内。',
+             '留足边缘': '说明完整物件及哪些边缘需要出现在画面内。',
+             '留一拍': '写出停顿动作或已确定的时长。',
+             '视线将回': '写出开始低头、转头等可见动作。',
+             '承载时间证据': '写明时钟位置、数字及是否清晰可读。',
+             '保留视线空间': '写出人物面向哪里，以及画面包括什么。',
+             '接受事实': '心理判断移至内部依据；正文写人物的动作和声音。',
+             '相容的视线轴': '明确摄影机在柜台哪一侧、人物面向谁。'}
+    for field in ('description', 'camera', 'action'):
+        for phrase, suggestion in vague.items():
+            if phrase in zh.get(field, ''):
+                findings.append({'rule': 'plain-language', 'field': field,
+                                 'excerpt': zh[field], 'suggestion': suggestion})
+    translated = shot.get('target', {}).get('translation_zh', '')
+    camera, action = translated.find('镜头运动：'), translated.find('人物运动：')
+    if camera >= 0 and action >= 0 and camera > action:
+        findings.append({'rule': 'camera-before-action', 'field': 'translation_zh',
+                         'excerpt': translated, 'suggestion': '中文对照先写镜头，再写动作，并核对系统原文相同关系。'})
+    for finding in findings:
+        errors.append('规范待修订 [' + finding['rule'] + ']：' + finding['suggestion'])
+    return {'errors': errors, 'warnings': warnings, 'findings': findings}
 
 
 def signature(state):
@@ -46,6 +68,7 @@ def ready(state, shot, context_hash=None, analysis_hash=None):
                 and rec.get('analysis_hash') == analysis_hash and analysis_hash
                 and rec.get('sequence_note', '').strip()
                 and set(checks) == set(CHECKS)
+                and checks.get('standards', {}).get('status') == 'pass'
                 and all(c.get('status') in ('pass', 'not_applicable') and c.get('note', '').strip()
                         for c in checks.values()))
 
@@ -67,7 +90,7 @@ def report(root, state=None):
         rows.append(row)
     return {'project_revision': state['revision'], 'context_hash': context_hash, 'analysis_hash': analysis_hash,
             'ready': all(r['ready'] for r in rows), 'shots': rows,
-            'scope': '字段检查不判断艺术质量；导演检查由 Codex 实际阅读全段剧情、表演和目标文本后记录。',
+            'scope': '七项人工审阅：叙事、人物、表演语气、节奏、连续性、目标适配、写作规范。自动检查仅覆盖字段和已知违规表述；通过不代表H3推理或空间执行验证。',
             'context': [{'id': s['id'], 'zh': s['zh'], 'target': s['target']} for s in state['shots']],
             'system': state['system'],
             'analysis': [{'path': p, 'text': safe_path(root, p).read_text(encoding='utf-8')}
@@ -94,14 +117,16 @@ def apply(root, packet):
         table = indexed(state['shots'])
         for u in updates:
             if set(u) != {'id', 'checks'} or u['id'] not in table or not isinstance(u['checks'], dict) or set(u['checks']) != set(CHECKS):
-                raise ValueError('逐镜检查需要有效镜号及全部六项检查')
+                raise ValueError('逐镜检查需要有效镜号及全部七项检查')
             for c in u['checks'].values():
                 if not isinstance(c, dict) or set(c) != {'status', 'note'} or c['status'] not in ('pass', 'revise', 'not_applicable') or not isinstance(c['note'], str) or not c['note'].strip():
                     raise ValueError('每项检查需要 pass/revise/not_applicable 和具体依据')
+            if u['checks']['standards']['status'] == 'not_applicable':
+                raise ValueError('写作规范必须实际检查，不能标记不适用')
             if not review.is_synced(state, table[u['id']]):
                 raise ValueError('先同步当前中文、系统原文和中文对照，再做导演检查')
             if inspect(table[u['id']])['errors'] and all(c['status'] != 'revise' for c in u['checks'].values()):
-                raise ValueError('导演稿字段未完整，不能记录为通过')
+                raise ValueError('导演稿字段未完整或规范未通过，不能记录为通过')
         for u in updates:
             shot = table[u['id']]
             shot['history'].append({'at': review.now(), 'event': 'director_review',

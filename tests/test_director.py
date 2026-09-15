@@ -118,3 +118,47 @@ class DirectorCase(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class WritingStandardsCase(unittest.TestCase):
+    setUp = DirectorCase.setUp
+    init = DirectorCase.init
+    packet = DirectorCase.packet
+    audit_packet = DirectorCase.audit_packet
+    audit = DirectorCase.audit
+    ready = DirectorCase.ready
+    def test_vague_camera_reports_original_and_blocks_approval(self):
+        self.init()
+        state=review.load_state(self.root)
+        zh=copy.deepcopy(state['shots'][0]['zh'])
+        zh['camera']='固定中景，留足后退空间，切点落在视线将回手机时。'
+        review.edit_shot(self.root,'S1',zh,state['revision'])
+        review.apply_sync(self.root,self.packet())
+        report=director.report(self.root)
+        row=report['shots'][0]
+        self.assertFalse(row['ready'])
+        self.assertEqual(len(row['findings']),2)
+        self.assertEqual(row['findings'][0]['excerpt'],zh['camera'])
+        with self.assertRaisesRegex(ValueError,'规范未通过'): self.audit()
+
+    def test_translation_order_is_checked(self):
+        self.init()
+        packet=self.packet()
+        packet['shots'][0]['translation_zh']='场景：店内。人物运动：后退。镜头运动：固定中景。'
+        review.apply_sync(self.root,packet)
+        self.assertIn('camera-before-action', [f['rule'] for f in director.report(self.root)['shots'][0]['findings']])
+
+    def test_old_audit_and_missing_standards_cannot_pass(self):
+        self.ready()
+        state=review.load_state(self.root)
+        state['shots'][0]['director_review']['version']=1
+        self.assertFalse(director.ready(state,state['shots'][0]))
+        packet=self.audit_packet()
+        del packet['shots'][0]['checks']['standards']
+        with self.assertRaisesRegex(ValueError,'七项'): director.apply(self.root,packet)
+
+    def test_standards_cannot_be_skipped(self):
+        self.ready()
+        packet=self.audit_packet()
+        packet['shots'][0]['checks']['standards']={'status':'not_applicable','note':'skip'}
+        with self.assertRaisesRegex(ValueError,'不能标记不适用'): director.apply(self.root,packet)
