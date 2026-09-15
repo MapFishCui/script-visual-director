@@ -74,7 +74,7 @@ def plan_limits(root, data):
     This is our reference-compatible planning policy, not a universal cap on
     output movies or on generic adapters. Check before rendering any media.
     """
-    if data['adapter'] != 'aimixer-h3':
+    if data['adapter'] != 'aimixer-h3' and not __import__('h3').is_h3(review.load_state(root)['system']):
         return []
     errors = []
     try:
@@ -222,21 +222,14 @@ def sync(root, packet):
         for g in packet['groups']:
             if set(g) != {'id', 'text', 'translation_zh', 'check_note'} or any(not isinstance(g[k], str) or not g[k].strip() for k in ('text', 'translation_zh', 'check_note')):
                 raise ValueError('每组需要完整原文、中文对照与实际检查说明')
-            if data['adapter'] == 'aimixer-h3':
-                for section in ('subject_definitions:', 'summary:', 'retention_analysis:', 'detailed_description:', 'overall_soundscape:', 'non_diegetic_music:'):
-                    if section not in g['text']:
-                        raise ValueError('H3 完整提示词缺少 ' + section)
+            if data['adapter'] == 'aimixer-h3' or __import__('h3').is_h3(review.load_state(root)['system']):
+                import h3
                 group = expected[g['id']]
-                markers = re.findall(r'\[Shot (\d+)\]', g['text'])
-                if markers != [str(i + 1) for i in range(len(group['cuts']))]:
-                    raise ValueError('组内 Shot 编号必须从1顺序排列且与镜头数一致')
-                for i, cut in enumerate(group['cuts'][1:], 2):
-                    if f"[Shot {i}] At {timecode(cut['local_start'])}," not in g['text']:
-                        raise ValueError('组内切镜时刻不符，不能沿用整集时间')
-                valid = {r['label'] for r in slots(data, group)}
-                used = set(re.findall(r'<(?:Picture|Video|Audio) \d+>', g['text']))
-                if used - valid:
-                    raise ValueError('提示词引用未绑定槽位：' + ', '.join(sorted(used - valid)))
+                errors = h3.validate(g['text'], group['cuts'], [r['label'] for r in slots(data, group)])
+                if not 4 <= group['duration'] <= 15:
+                    errors.append('H3单次任务时长须4–15秒')
+                if errors:
+                    raise ValueError(g['id'] + ': ' + '; '.join(errors))
             compiled[g['id']] = {k: g[k] for k in ('text', 'translation_zh', 'check_note')}
         data.update(compiled=compiled, revision=data['revision'] + 1, approval=None)
         persist(root, data, 'groups_synced')
@@ -248,6 +241,11 @@ def planning_pending(root, data):
     if not data.get('director_groups'): result.append('导演组尚未规划：旧groups仅为生成任务，请补充多个视频段如何合并输出')
     if data['storyboard_fingerprint'] != fingerprint(root): result.append('原分镜已改变，分组需复核并重新同步')
     if set(data['compiled']) != {g['id'] for g in data['groups']}: result.append('分组提示词与中文对照待同步')
+    if data['adapter'] == 'aimixer-h3' or __import__('h3').is_h3(review.load_state(root)['system']):
+        import h3
+        for g in schedule(root, data):
+            if g['id'] in data['compiled']:
+                result.extend(g['id'] + ': ' + e for e in h3.validate(data['compiled'][g['id']]['text'], g['cuts'], [r['label'] for r in slots(data,g)]))
     return result
 
 
