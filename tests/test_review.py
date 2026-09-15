@@ -194,4 +194,62 @@ class ReviewCase(unittest.TestCase):
         with request('/') as r:self.assertIn('script-src',r.headers['Content-Security-Policy'])
 
 
+
+
+class ProductionOverviewCase(unittest.TestCase):
+    setUp = ReviewCase.setUp
+    init = ReviewCase.init
+    packet = ReviewCase.packet
+    audit_packet = ReviewCase.audit_packet
+    audit = ReviewCase.audit
+    ready = ReviewCase.ready
+    def test_asset_progress_changes_without_storyboard_revision(self):
+        self.ready()
+        before = review.view(self.root)
+        test_workflow.ProjectCase.finish(self, 'DAD')
+        after = review.view(self.root)
+        self.assertEqual(before['revision'], after['revision'])
+        self.assertNotEqual(before['display_fingerprint'], after['display_fingerprint'])
+        self.assertEqual(after['production']['completed'], 1)
+        self.assertFalse(after['production']['complete'])
+        self.assertTrue(after['production']['assets'][0]['file'])
+
+    def test_empty_asset_list_does_not_claim_completed(self):
+        m = load_project(self.root)
+        m['assets'] = []; m['gates'] = []; m['shots'][0]['assets'] = []
+        write_json(self.root/'manifest.json', m)
+        self.ready()
+        result = review.view(self.root)
+        self.assertEqual(result['production']['total'], 0)
+        self.assertFalse(result['production']['complete'])
+
+    def test_zip_is_downloaded_with_correct_mime(self):
+        self.init()
+        m = load_project(self.root)
+        m['documents'].append({'path':'delivery.zip', 'role':'handoff'})
+        write_json(self.root/'manifest.json', m)
+        with zipfile.ZipFile(self.root/'delivery.zip', 'w') as out: out.writestr('test.txt', 'fixture')
+        server=make_server(self.root,0,'test-token')
+        threading.Thread(target=server.serve_forever,daemon=True).start()
+        self.addCleanup(server.server_close);self.addCleanup(server.shutdown)
+        req=Request(f'http://127.0.0.1:{server.server_port}/api/file?path=delivery.zip',headers={'X-Review-Token':'test-token'})
+        with urlopen(req) as response:
+            self.assertEqual(response.headers['Content-Type'], 'application/zip')
+            self.assertEqual(response.headers['Content-Disposition'], 'attachment')
+            self.assertEqual(response.read(), (self.root/'delivery.zip').read_bytes())
+
+    def test_progress_page_available_before_storyboard_without_initializing(self):
+        m=load_project(self.root);m['shots']=[];m['assets']=[];m['gates']=[]
+        write_json(self.root/'manifest.json',m)
+        result=review.view(self.root)
+        self.assertFalse(result['initialized'])
+        self.assertEqual(result['shots'],[])
+        self.assertFalse(result['production']['complete'])
+        self.assertFalse((self.root/review.STATE).exists())
+        server=make_server(self.root,0,'early-token')
+        threading.Thread(target=server.serve_forever,daemon=True).start()
+        self.addCleanup(server.server_close);self.addCleanup(server.shutdown)
+        req=Request(f'http://127.0.0.1:{server.server_port}/api/state',headers={'X-Review-Token':'early-token'})
+        with urlopen(req) as response:self.assertFalse(json.load(response)['initialized'])
+
 if __name__=='__main__':unittest.main()

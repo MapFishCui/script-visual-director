@@ -16,7 +16,7 @@ WEB = Path(__file__).resolve().parents[1] / 'assets' / 'review'
 
 def make_server(root, port=0, token=None):
     root = Path(root).resolve()
-    review.load_state(root)
+    review.load_project(root)
     token = token or secrets.token_urlsafe(32)
 
     class Handler(BaseHTTPRequestHandler):
@@ -67,9 +67,9 @@ def make_server(root, port=0, token=None):
                         raise PermissionError('Only registered project resources are available')
                     file = safe_path(root, relative)
                     extension = file.suffix.lower()
-                    mime = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime'}.get(extension, 'text/plain; charset=utf-8')
+                    mime = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime', '.zip': 'application/zip', '.blend': 'application/octet-stream'}.get(extension, 'text/plain; charset=utf-8')
                     # These are project-owned media/text only; never execute uploaded HTML/SVG.
-                    extra = {'Content-Disposition': 'attachment'} if extension == '.gltf' else None
+                    extra = {'Content-Disposition': 'attachment'} if extension in ('.gltf', '.zip', '.blend') else None
                     payload = file.read_bytes()
                     if extension in ('.mp4', '.webm', '.mov'):
                         extra = {'Accept-Ranges': 'bytes'}

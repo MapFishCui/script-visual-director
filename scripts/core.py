@@ -263,6 +263,8 @@ def validate_project(root, strict=False):
         pending.extend('Review workflow: ' + reason for reason in review_blockers(root))
     except (ValueError, OSError, KeyError, TypeError) as exc:
         errors.append('Review workflow: ' + str(exc))
+    from series import verify as verify_inheritance
+    errors.extend(verify_inheritance(root)['errors'])
     return {"ok": not errors and (not strict or not pending), "errors": errors, "pending": sorted(set(pending))}
 
 

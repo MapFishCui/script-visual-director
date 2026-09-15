@@ -24,6 +24,7 @@ class GroupsCase(unittest.TestCase):
 
     def plan(self, adapter='aimixer-h3'):
         return {'revision': 0, 'project_revision': review.load_state(self.root)['revision'], 'adapter': adapter,
+                'director_groups':[{'id':'D01','title':'Synthetic director group','tasks':['G01'],'intent_zh':'测试段落','continuity_in':'start','continuity_out':'end'}],
                 'shared_references': [{'key':'dad','kind':'image','asset':'DAD','version':1}],
                 'groups': [{'id':'G01','title':'Synthetic group','shots':['S1'],'intent_zh':'测试意图',
                             'continuity_in':'静止起始','continuity_out':'放下碗',
@@ -127,5 +128,45 @@ class GroupsCase(unittest.TestCase):
         finally:
             server.shutdown();server.server_close();thread.join()
 
+
+
+
+class PlanningLimitCase(unittest.TestCase):
+    setUp = GroupsCase.setUp
+    init = GroupsCase.init
+    packet = GroupsCase.packet
+    audit_packet = GroupsCase.audit_packet
+    audit = GroupsCase.audit
+    ready = GroupsCase.ready
+    plan = GroupsCase.plan
+    compile_packet = GroupsCase.compile_packet
+    synced = GroupsCase.synced
+    def test_twenty_second_h3_plan_rejected_before_persisting(self):
+        self.ready()
+        s=review.load_state(self.root);zh=copy.deepcopy(s['shots'][0]['zh']);zh['duration']=20
+        review.edit_shot(self.root, 'S1', zh, s['revision'])
+        with self.assertRaisesRegex(ValueError, '15 秒'):
+            groups.apply(self.root, self.plan())
+        self.assertFalse((self.root/groups.STATE).exists())
+        generic=groups.apply(self.root, self.plan('generic'))
+        self.assertEqual(generic['schedule'][0]['duration'],20)
+
+    def test_legacy_overlong_group_cannot_remain_approved(self):
+        self.synced()
+        s=review.load_state(self.root);zh=copy.deepcopy(s['shots'][0]['zh']);zh['duration']=20
+        review.edit_shot(self.root,'S1',zh,s['revision'])
+        data=groups.load(self.root)
+        self.assertTrue(any('15 秒' in msg for msg in groups.planning_pending(self.root,data)))
+        self.assertFalse(groups.approved(self.root,data))
+        with self.assertRaisesRegex(ValueError, '15 秒'):
+            review.require_phase(self.root,'blockout')
+
+    def test_fifteen_second_budget_is_allowed(self):
+        self.ready()
+        state=review.load_state(self.root);zh=copy.deepcopy(state['shots'][0]['zh']);zh['duration']=15
+        review.edit_shot(self.root,'S1',zh,state['revision'])
+        result=groups.apply(self.root,self.plan())
+        self.assertEqual(result['schedule'][0]['duration'],15)
+        self.assertEqual(groups.plan_limits(self.root,groups.load(self.root)),[])
 
 if __name__=='__main__':unittest.main()

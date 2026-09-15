@@ -143,11 +143,24 @@ def main(argv=None):
     cmd=commands.add_parser('groups-request'); cmd.add_argument('project'); cmd.add_argument('output')
     cmd=commands.add_parser('groups-check'); cmd.add_argument('project')
     cmd=commands.add_parser('groups-confirm'); cmd.add_argument('project'); cmd.add_argument('--evidence',required=True)
-    cmd=commands.add_parser('groups-package'); cmd.add_argument('project'); cmd.add_argument('output'); cmd.add_argument('--draft',action='store_true')
+    cmd=commands.add_parser('groups-package'); cmd.add_argument('project'); cmd.add_argument('output'); cmd.add_argument('--draft',action='store_true'); cmd.add_argument('--director-group')
+    cmd=commands.add_parser('groups-bundle'); cmd.add_argument('project'); cmd.add_argument('output'); cmd.add_argument('--draft',action='store_true')
     cmd=commands.add_parser('groups-previs'); cmd.add_argument('project'); cmd.add_argument('index'); cmd.add_argument('--blender')
+    cmd=commands.add_parser('series-init');cmd.add_argument('library');cmd.add_argument('--name',required=True)
+    cmd=commands.add_parser('series-list');cmd.add_argument('library')
+    cmd=commands.add_parser('series-publish');cmd.add_argument('project');cmd.add_argument('library');cmd.add_argument('--episode',required=True);cmd.add_argument('--assets',required=True)
+    cmd=commands.add_parser('series-inherit');cmd.add_argument('project');cmd.add_argument('library');cmd.add_argument('plan')
+    cmd=commands.add_parser('series-check');cmd.add_argument('project')
     args = parser.parse_args(argv)
     try:
-        if args.command.startswith('groups-'):
+        if args.command.startswith('series-'):
+            import series
+            if args.command=='series-init': result=series.initialize(args.library,args.name)
+            elif args.command=='series-list': result=series.catalog(args.library)
+            elif args.command=='series-publish': result=series.publish(args.project,args.library,args.episode,[x.strip() for x in args.assets.split(',') if x.strip()])
+            elif args.command=='series-inherit': result=series.inherit(args.project,args.library,read_json(args.plan))
+            else: result=series.verify(args.project)
+        elif args.command.startswith('groups-'):
             import groups
             if args.command == 'groups-apply': result=groups.apply(args.project,read_json(args.packet))
             elif args.command == 'groups-sync': result=groups.sync(args.project,read_json(args.packet))
@@ -162,7 +175,13 @@ def main(argv=None):
                 result=group_previs.build(args.project,args.index,args.blender)
             else:
                 import group_package
-                result=group_package.package(args.project,args.output,args.draft)
+                result=(group_package.bundle(args.project,args.output,args.draft) if args.command=='groups-bundle' else group_package.package(args.project,args.output,args.draft,args.director_group))
+                output_path=Path(args.output).resolve()
+                try: output_path.relative_to(Path(args.project).resolve())
+                except ValueError: pass
+                else:
+                    import previs
+                    previs.documents(args.project,[output_path])
         elif args.command.startswith('previs-'):
             import previs
             if args.command == 'previs-doctor': result = previs.doctor(args.blender)
@@ -249,7 +268,7 @@ def main(argv=None):
         else:
             result = package(args.project, args.output, args.draft)
         print(json.dumps(result if result is not None else {"ok": True}, ensure_ascii=False, indent=2))
-        return 1 if (args.command == 'groups-check' and not result['ready']) or (args.command == "validate" and not result["ok"]) or (args.command == "review-check" and not result['ready']) else 0
+        return 1 if (args.command == 'series-check' and not result['ok']) or (args.command == 'groups-check' and not result['ready']) or (args.command == "validate" and not result["ok"]) or (args.command == "review-check" and not result['ready']) else 0
     except (ValueError, OSError, KeyError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2

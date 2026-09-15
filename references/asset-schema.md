@@ -71,3 +71,5 @@ revise 创建新版本，不修改旧文件；旧版 superseded，直接及间�
 `validate` 返回 errors（数据或文件错误）与 pending（未完成事项）；规划阶段 pending 不导致失败。`--strict` 要求两者均为空。`queue` 只列出实际可生成的项目，已生成图片应检查或 revise，不重复覆盖。
 
 数据结构表达和校验依赖，但不能判断用户的文字是否真是确认、心理推断是否合理、图片是否好看；这些仍由 Codex 结合实际对话和图片负责。
+
+剧集共享库与本集继承以独立 library.json 和已登记的 series/inheritance/*.json 保存，不扩展 manifest 根字段。具体流程见 [跨集资产继承](series-continuity.md)。

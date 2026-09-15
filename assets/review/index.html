@@ -1,27 +1,30 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>分镜审核 · 剧本视觉导演</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>项目审阅 · 剧本视觉导演</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
 <body>
 <header><div><span class="eyebrow">剧本视觉导演 / STORYBOARD REVIEW</span><h1 id="projectTitle">分镜审核</h1></div><div class="topActions"><span id="targetLabel" class="tag">读取项目中</span><button id="refresh" class="secondary">刷新项目</button></div></header>
 <div class="stagebar" id="stages"></div>
 <div id="notice" role="status" aria-live="polite">正在连接本地项目…</div>
+<section class="card projectOverview" id="projectOverview" aria-label="项目进度与成果"></section>
 <main>
 <aside><div class="sidebarHead"><h2>镜头列表</h2><span id="count"></span></div><label class="sr-only" for="filter">筛选镜头</label><select id="filter"><option value="all">全部镜头</option><option value="pending_sync">待同步</option><option value="needs_direction">待导演检查</option><option value="review">待确认</option><option value="approved">已确认</option></select><nav id="shotList" aria-label="分镜列表"></nav></aside>
 <section class="workspace">
 <div class="shotHead"><div><span class="eyebrow" id="shotId"></span><h2 id="shotTitle"></h2></div><span id="shotStatus" class="tag"></span></div>
 <div class="columns">
-<section class="card"><div class="cardHead"><h3>中文导演稿</h3><span id="version"></span></div><p class="muted">修改后保存，再回 Codex 说“同步修改”。中文是系统文本的依据。</p><form id="editor">
+<section class="card"><div class="cardHead"><h3>中文导演稿</h3><span id="version"></span></div><p class="muted">正文只写三项：场景、人物运动、镜头运动。修改后保存，再回 Codex 说“同步修改”。中文是系统文本的依据。</p><form id="editor">
+<label>场景<textarea id="description" name="description" rows="5" maxlength="20000" placeholder="地点、环境状态、关键物件与人物起始位置" required></textarea></label>
+<label>人物运动<textarea id="action" name="action" rows="2" maxlength="20000" placeholder="正在经历什么 → 顺势行为与小动作 → 少量细微反应；含对应台词与语气，写明起止状态"></textarea></label>
+<label>镜头运动<textarea id="camera" name="camera" rows="2" maxlength="20000" placeholder="景别、机位、构图；固定或运动路径与速度，写明与人物动作的关系"></textarea></label>
+<details id="creativeNotes"><summary>创作依据与时长（内部拆解）</summary><p class="muted">旧稿保留原文，改标签不会自动整理内容；可回 Codex 说“整理为三项分镜”。</p>
 <label>叙事目的<input id="purpose" name="purpose" maxlength="20000"></label>
 <div class="fieldRow"><label>时长（秒）<input id="duration" name="duration" type="number" min="0.001" max="3600" step="any" placeholder="待定"></label><label>景别与机位<input id="framing" name="framing" maxlength="20000" placeholder="如：面部特写"></label></div>
-<label>画面描述<textarea id="description" name="description" rows="5" maxlength="20000" required></textarea></label>
-<label>动作起止<textarea id="action" name="action" rows="2" maxlength="20000" placeholder="起始状态 → 动作 → 结束状态"></textarea></label>
-<label>运镜<textarea id="camera" name="camera" rows="2" maxlength="20000" placeholder="选定一种方案，如：固定机位；运动则说明起幅、结束构图与速度"></textarea></label>
 <label>台词／旁白／画面文字<textarea id="dialogue" name="dialogue" rows="3" maxlength="20000" placeholder="需要逐字保留的文字；不制作配音"></textarea></label>
 <label>人物心理<textarea id="psychology" name="psychology" rows="3" maxlength="20000" placeholder="发生了什么 → 人物如何理解 → 想做什么或掩饰什么 → 作出什么选择；标记推断"></textarea></label>
-<label>可见表演<textarea id="performance" name="performance" rows="3" maxlength="20000" placeholder="主要反应、眼神落点、动作或停顿；怎样延续到下一镜。无人物时说明不适用"></textarea></label>
+<label>可见表演<textarea id="performance" name="performance" rows="3" maxlength="20000" placeholder="正在经历什么 → 顺势的小动作 → 少量细微反应；不限动作种类，根据处境、习惯和关系选择，当前镜头须能呈现，承接邻镜。无人物时说明不适用"></textarea></label>
 <label>逐句台词语气<textarea id="delivery" name="delivery" rows="3" maxlength="20000" placeholder="逐句对应发声者：慵懒、愤怒、害羞等语气；说明语速、音量、停顿或重音。无发声时明确写出"></textarea></label>
 <label>节奏安排<textarea id="rhythm" name="rhythm" rows="3" maxlength="20000" placeholder="信息何时出现、人物何时反应、停留多久、何时切走；注明台词估时及跨镜安排"></textarea></label>
 <label>连续性约束<textarea id="continuity" name="continuity" rows="3" maxlength="20000"></textarea></label>
+</details>
 <div class="actions"><button id="save" type="submit">保存中文修改</button><button id="revert" type="button" class="secondary">撤销未保存修改</button></div><p id="saveState" class="muted">尚未修改</p></form><details id="recovery" hidden><summary>旧版本的未保存草稿（可复制后合并）</summary><pre id="recoveryText"></pre></details></section>
 <section class="card target"><div class="cardHead"><h3>目标系统文本</h3><span class="tag" id="targetState">待同步</span></div><p class="muted" id="targetHelp">系统文本由 Codex 编译，不在此处独立编辑。</p><h4>系统原文</h4><pre id="targetText" tabindex="0"></pre><h4>中文对照</h4><p class="muted">完整对应上方系统原文。调整导演意图请编辑左侧中文稿，再同步更新两份文本。</p><pre id="targetTranslation" class="translation" tabindex="0"></pre><div id="sources"></div><p id="targetNote" class="muted"></p><section aria-label="导演质量检查"><h4>节奏与人物检查</h4><div id="quality"></div></section><button id="approve">确认当前镜头</button><p class="muted">确认绑定当前导演稿、系统文本与导演检查；上下文改变后须重新检查。</p><details open><summary>依赖与连续性检查</summary><div id="impact"></div></details></section>
 </div>

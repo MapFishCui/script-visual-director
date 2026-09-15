@@ -33,4 +33,4 @@ v0.5 可导出每镜纯摄影机 reference.mp4、审核 review.mp4 及串联版�
 
 ## AIMixer 导演台
 
-v0.6 按 [生成分组](generation-groups.md) 支持 AIMixer/ComfyUI_MiniMaxH3_Director 的 r2v 导演包。通用分组独立保存，公共素材与组内素材映射到当前槽位；换工具需重编译，不重建原始分镜。groups-package 正式导出要求项目与组计划就绪；--draft 保留缺失事项。上游导入契约测试与 H3 实际推理是两个验证层级。
+v0.7 按 [导演组与任务](generation-groups.md) 支持 AIMixer/ComfyUI_MiniMaxH3_Director 的 r2v 导演包。导演组与视频段任务分开保存；一个导演包包含一个导演组的多个短任务，分别生成再合并输出，导演组可以远超15秒。公共素材与任务素材映射到当前槽位；换工具需重编译，不重建原始分镜。groups-package 正式导出要求项目与组计划就绪；--draft 保留缺失事项。上游导入契约测试与 H3 实际推理是两个验证层级。

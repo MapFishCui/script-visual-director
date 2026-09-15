@@ -484,3 +484,23 @@ project-assets/
 新增 groups/state.json 与独立历史：分组保存、同步、确认采用源分镜指纹及双版本校验。镜头按原顺序完整覆盖，组内时间从0开始；用户在网页修改导演意图并由 Codex 编译中英稿。分组确认不代表素材已生成。
 
 逐镜预演可按组输出审核与纯摄影机串联版，有缺镜的组列为待办；文件与源索引指纹用于阻止过期引用。公共／组内素材保留通用 key 和确切资产版本，适配器编译为槽位。当前提供 generic ZIP 与 AIMixer r2v mmxpack，按真实上游导入器进行契约验证，仍保留 target_h3_validated=false。完整操作见 references/generation-groups.md。
+
+
+## v0.7：导演组与电影化二次创作
+
+导演组是一次合并输出的完整段落，可53秒、48秒或更长。内部多个视频段分别生成；H3参考输入预算只检查视频段任务。旧 groups 数据字段保留为任务列表，新增 director_groups 存储导演组及任务顺序。旧项目不自动改写，补充分组方案后重新确认；不重做或覆盖原始图片。
+
+先撰写可读的 creative-treatment.md，在保持核心设定的前提下主动丰富生活细节、潜台词、反应、画外声和揭示顺序，可选择“局部逐步揭示整体”；每个细节有作用，不按特写数或15秒节拍写戏。具体见 references/creative-development.md。
+
+`groups-package PROJECT OUTPUT.mmxpack.zip --director-group D01` 导出一个导演组；`groups-bundle PROJECT OUTPUT.zip` 导出包含多个独立导演包的总ZIP。解压后每包分别导入、生成并合并，通用适配器可手动逐段生成和剪辑。本skill不生成最终AI视频。创作时长和模型帧对齐后的时长分别报告。
+
+网页展示两层结构及合并时长。预演按任务提供短参考视频，按导演组提供整体节奏审核片；不能把整组长预演当作单次H3输入。详见 references/generation-groups.md。
+
+
+## v0.8：剧集共享资产与第二集继承
+
+剧集共享库保存已完成图片的不可覆盖版本，每集独立保存剧本、导演组、布局、预演和确认。第二集开始先核对上一集结束状态，列出直接复用、参考改造、新增三类资产；人物四图、服装、道具状态分别选定，场景结合本集布局检查。
+
+使用 series-init 建库、series-publish 入库、series-list 查看确切版本、series-inherit 按方案复制到第二集、series-check 验证来源和图片哈希。库版本不自动更新各集；已审核图不会被覆盖。参考候选和继承场景须本集复核，同图人物／道具可保留原有图像批准。项目页显示来源集和版本，正式导出校验继承文件，迁移第二集不依赖第一集绝对路径。
+
+完整命令和JSON方案见 [跨集资产继承](references/series-continuity.md)。

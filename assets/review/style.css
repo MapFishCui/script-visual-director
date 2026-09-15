@@ -3,3 +3,7 @@
 #targetText{min-height:120px;max-height:360px}.translation{background:#edf3ea;border-color:#d7e2d2;font-family:inherit;font-size:13px;line-height:1.85;max-height:440px;overflow:auto}
 
 .qualityError{color:#9b302b}#quality{background:#f6f8f6;border:1px solid #dbe4dd;padding:14px;border-radius:6px;margin:12px 0}#quality p{line-height:1.65}
+
+.projectOverview{margin:18px 34px 0}.projectOverview details{margin-top:14px}.projectOverview .resources{max-height:480px;overflow:auto}@media(max-width:640px){.projectOverview{margin:12px 18px 0}}
+
+main[hidden]{display:none}

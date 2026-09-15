@@ -16,14 +16,17 @@ class GroupPrevisCase(unittest.TestCase):
         with patch('previs.blender_path',return_value='synthetic'),patch('previs.invoke',side_effect=case.encoder):
             source=previs_export.export_shots(case.root,'previs/runs/synthetic')['index']
             packet={'revision':0,'project_revision':review.load_state(case.root)['revision'],'adapter':'aimixer-h3',
+                    'director_groups':[{'id':'D01','title':'Whole synthetic scene','tasks':['G01'],'intent_zh':'Test only','continuity_in':'start','continuity_out':'end'}],
                     'shared_references':[],'groups':[{'id':'G01','title':'Test','shots':['S1','S2'],
                         'intent_zh':'Test only','continuity_in':'start','continuity_out':'end','references':[]}]}
             groups.apply(case.root,packet)
             result=group_previs.build(case.root,source)
-        self.assertEqual(result['generated_groups'],1);self.assertEqual(result['missing_groups'],[])
-        self.assertEqual([r['frames'] for r in case.requests],[120,120])
+        self.assertEqual(result['generated_director_groups'],1);self.assertEqual(result['generated_groups'],1);self.assertEqual(result['missing_groups'],[])
+        self.assertEqual([r['frames'] for r in case.requests],[120,120,120,120])
         ref={'key':'movement','kind':'video','index':result['index'],'item':'G01'}
         self.assertEqual(groups.resolve(case.root,ref)['seconds'],10)
+        with self.assertRaisesRegex(ValueError,'整体审阅'):
+            groups.resolve(case.root,dict(ref,item='D01'))
         packet['revision']=groups.load(case.root)['revision'];packet['project_revision']=review.load_state(case.root)['revision']
         packet['groups'][0]['references']=[ref,dict(ref,key='duplicate_motion')]
         groups.apply(case.root,packet)

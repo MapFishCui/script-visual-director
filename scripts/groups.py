@@ -18,7 +18,7 @@ REF = {'type': 'object', 'additionalProperties': False,
 GROUP = {'type': 'object', 'additionalProperties': False,
          'required': ['id', 'title', 'shots', 'intent_zh', 'continuity_in', 'continuity_out', 'references'],
          'properties': {
-             'id': {'type': 'string', 'pattern': '^G[A-Za-z0-9_-]+$'},
+             'id': {'type': 'string', 'pattern': '^[GT][A-Za-z0-9_-]+$'},
              **{k: {'type': 'string', 'minLength': 1} for k in ('title', 'intent_zh', 'continuity_in', 'continuity_out')},
              'shots': {'type': 'array', 'minItems': 1, 'uniqueItems': True, 'items': {'type': 'string'}},
              'references': {'type': 'array', 'items': REF}}}
@@ -29,6 +29,29 @@ PLAN = {'type': 'object', 'additionalProperties': False,
                        'adapter': {'enum': ['generic', 'aimixer-h3']},
                        'shared_references': {'type': 'array', 'items': REF},
                        'groups': {'type': 'array', 'minItems': 1, 'items': GROUP}}}
+
+# `groups` remains the on-disk task list for backwards compatibility.
+DIRECTOR_GROUP = {'type':'object','additionalProperties':False,
+    'required':['id','title','tasks','intent_zh','continuity_in','continuity_out'],
+    'properties':{'id':{'type':'string','pattern':'^D[A-Za-z0-9_-]+$'},
+        'tasks':{'type':'array','minItems':1,'uniqueItems':True,'items':{'type':'string'}},
+        **{k:{'type':'string','minLength':1} for k in ('title','intent_zh','continuity_in','continuity_out')}}}
+PLAN['properties']['director_groups']={'type':'array','minItems':1,'items':DIRECTOR_GROUP}
+
+
+def director_schedule(root, data):
+    tasks = {g['id']:g for g in schedule(root,data)}
+    rows=[]; original=0
+    for group in data.get('director_groups',[]):
+        cursor=0; members=[]
+        for tid in group['tasks']:
+            task=tasks[tid]
+            members.append({'id':tid,'start':cursor,'duration':task['duration'],'shots':task['shots']})
+            cursor+=task['duration']
+        rows.append(dict(group,duration=cursor,original_start=original,segments=members,
+                         shots=[sid for task in members for sid in task['shots']],output_file=group['id']+'.mp4'))
+        original+=cursor
+    return rows
 
 
 def fingerprint(root):
@@ -42,7 +65,29 @@ def load(root):
 
 
 def content(state):
-    return {k: state[k] for k in ('adapter', 'shared_references', 'groups', 'storyboard_fingerprint', 'compiled')}
+    return {**{k: state[k] for k in ('adapter', 'shared_references', 'groups', 'storyboard_fingerprint', 'compiled')}, 'director_groups':state.get('director_groups',[])}
+
+
+def plan_limits(root, data):
+    """AIMixer reference-video workflow: plan each generation task within its 15s budget.
+
+    This is our reference-compatible planning policy, not a universal cap on
+    output movies or on generic adapters. Check before rendering any media.
+    """
+    if data['adapter'] != 'aimixer-h3':
+        return []
+    errors = []
+    try:
+        timeline = schedule(root, data)
+    except (KeyError, ValueError) as exc:
+        return ['无法检查分组时长：' + str(exc)]
+    for g in timeline:
+        if g['duration'] > 15 + 1e-6:
+            errors.append(f"{g['id']}（{', '.join(g['shots'])}）计划 {g['duration']:g} 秒，超过 H3 参考视频流程每次生成任务 15 秒参考预算；请按动作／反应切点拆镜或拆分任务，保留总时长，再确认与预演")
+        refs = slots(data, g)
+        if sum(r['kind'] == 'image' for r in refs) > 9 or sum(r['kind'] == 'video' for r in refs) > 3 or len(refs) > 12:
+            errors.append(g['id'] + '：任务计划引用数量超限（最多9图、3视频、12项素材）')
+    return errors
 
 
 def validate_plan(root, packet):
@@ -56,6 +101,11 @@ def validate_plan(root, packet):
         raise ValueError('分组必须按原顺序连续覆盖全部镜头，不能漏镜、重复或跨镜重排')
     if len({g['id'] for g in packet['groups']}) != len(packet['groups']):
         raise ValueError('分组编号重复')
+    directors=packet.get('director_groups',[])
+    if directors:
+        if len({g['id'] for g in directors})!=len(directors): raise ValueError('导演组编号重复')
+        if [tid for g in directors for tid in g['tasks']]!=[g['id'] for g in packet['groups']]:
+            raise ValueError('导演组必须按顺序完整覆盖全部视频段任务一次，不能遗漏、重复或跨组重排')
     for g in packet['groups']:
         refs = packet['shared_references'] + g['references']
         if len({r['key'] for r in refs}) != len(refs):
@@ -68,6 +118,8 @@ def validate_plan(root, packet):
                 safe_path(root, ref['index'])
     if any(r['kind'] != 'image' for r in packet['shared_references']):
         raise ValueError('当前公共素材只支持图片；预演视频按组绑定')
+    violations = plan_limits(root, packet)
+    if violations: raise ValueError('; '.join(violations))
 
 
 def persist(root, data, event):
@@ -98,7 +150,7 @@ def apply(root, packet):
         if packet['revision'] != (old['revision'] if old else 0):
             raise ValueError('分组版本冲突，请重新读取')
         data = {k: copy.deepcopy(packet[k]) for k in ('adapter', 'shared_references', 'groups')}
-        data.update(schema_version=1, revision=packet['revision'] + 1,
+        data.update(schema_version=2, director_groups=copy.deepcopy(packet.get('director_groups',[])), revision=packet['revision'] + 1,
                     storyboard_fingerprint=fingerprint(root), compiled={}, approval=None)
         persist(root, data, 'groups_plan_saved')
     return view(root)
@@ -139,9 +191,11 @@ def request(root):
     data = load(root)
     return {'revision': data['revision'], 'project_revision': review.load_state(root)['revision'],
             'storyboard_fingerprint': fingerprint(root), 'adapter': data['adapter'],
+            'director_groups': director_schedule(root,data),
+            'planning_limits': {'max_task_seconds': 15, 'max_director_group_seconds': None, 'reason': 'H3参考视频按生成任务检查；导演组合并输出可以53秒、48秒或更长'} if data['adapter'] == 'aimixer-h3' else {},
             'groups': [dict(g, reference_slots=slots(data, g), previous=data['compiled'].get(g['id']))
                        for g in schedule(root, data)],
-            'instructions': '按组内零起点与切镜时刻编译完整提示词及中文对照；保持台词、语气和衔接。素材未就绪是待绑定稿。'}
+            'instructions': '先读导演组的完整段落意图与上下文；每个视频段任务按段内零起点与切镜时刻编译完整提示词及中文对照；保持台词、语气和衔接。素材未就绪是待绑定稿。'}
 
 
 def timecode(seconds):
@@ -190,7 +244,8 @@ def sync(root, packet):
 
 
 def planning_pending(root, data):
-    result = []
+    result = plan_limits(root, data)
+    if not data.get('director_groups'): result.append('导演组尚未规划：旧groups仅为生成任务，请补充多个视频段如何合并输出')
     if data['storyboard_fingerprint'] != fingerprint(root): result.append('原分镜已改变，分组需复核并重新同步')
     if set(data['compiled']) != {g['id'] for g in data['groups']}: result.append('分组提示词与中文对照待同步')
     return result
@@ -236,6 +291,7 @@ def resolve(root, ref):
         verify(root, index)
         item = next((g for g in data['groups'] if g['id'] == ref['item']), None)
         if not item: raise ValueError('分组预演镜号缺失')
+        if item.get('level') == 'director': raise ValueError('导演组合并预演仅供整体审阅，请绑定对应短任务的预演参考')
         path = safe_path(index.parent, item['reference'])
         return {'path': path.relative_to(Path(root).resolve()).as_posix(), 'sha256': previs.sha(path), 'seconds': item['seconds']}
     from previs_export import checked_bundle
@@ -254,7 +310,8 @@ def view(root):
     try: timeline = schedule(root, data)
     except (ValueError, KeyError):
         timeline = []; pending.append('旧分组无法对应当前镜头，请重新保存方案')
-    return dict(data, approved=approved(root, data), pending=pending, schedule=timeline)
+    return dict(data, approved=approved(root, data), pending=pending, schedule=timeline,
+                director_schedule=director_schedule(root,data) if timeline else [])
 
 
 def readiness(root):
@@ -276,4 +333,4 @@ def readiness(root):
             if any(not 2 <= sec <= 15 for sec in seconds) or sum(seconds) > 15 + 1e-6:
                 pending.append(g['id'] + ': 参考视频单段须2–15秒且合计不超过15秒')
         rows.append(dict(g, slots=refs))
-    return {'ready': not pending, 'pending': pending, 'groups': rows, 'adapter': data['adapter']}
+    return {'ready': not pending, 'pending': pending, 'groups': rows, 'director_groups': director_schedule(root,data), 'adapter': data['adapter']}

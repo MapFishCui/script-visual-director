@@ -1,81 +1,64 @@
-# 通用生成分组与导演台适配（v0.6）
+# 导演组、视频段任务与镜头（v0.7）
 
-分镜是独立制作单位，生成组是一次模型任务的组织单位。分组保持与目标工具分离；AIMixer 是当前支持的一个适配器，不把它的 UI 或任务类型写进原始分镜。当前提供通用 ZIP 和 AIMixer r2v `.mmxpack.zip` 两种导出。
+导演组是一次合并输出的完整剧情段落，可以53秒、48秒或更长。一个导演组包含多个视频段任务；一任务对应一次生成，可含多个镜头。先按情绪与信息设计导演组，再把镜头分配到任务；不按15秒切断段落叙事。
 
-## 工作顺序
+内部 JSON 的 `groups` 为兼容旧项目保留，实际表示短视频段任务；新增 `director_groups` 表示导演组。不要根据旧字段英文名称继续把两者混为一谈。推荐任务编号 T01、T02，导演组编号 D01、D02；旧任务 G01 等无需改名。每个任务的镜头连续、全片覆盖一次；每个导演组的任务也连续、全片覆盖一次，不能漏项、重复或重排。
 
-1. 在分镜阶段，Codex 按连续动作、信息投放、人物反应、场景和时间省略提出分组，同时考虑目标时长、参考视频和素材数量。所有镜头按顺序连续覆盖一次，不任意跳镜凑组。
-2. 保留每镜原时长；为每组计算从0开始的切镜时间，写导演意图、承接状态和结束状态。组内起止与原片时间同时保留，避免把整集时间直接交给单次生成。
-3. 根据目标模式编译组级完整系统提示词与完整中文对照。AIMixer H3 r2v 使用六部分结构；公共主体定义、参考保留规则、各镜动作和逐句口气均有依据，不能把逐镜片段随意拼成缺少上下文的最终提示词。
-4. 用户确认分镜与分组后，继续布局、可选预演及资产流程。分组确认是导演计划确认，不等于图片已生成或模型已验证。
-5. 预演保留逐镜文件，用 `groups-previs` 输出组内串联版。一个组缺少任何成员镜头时，整组标为缺失，不能把已有部分伪装完整组。
-6. 基准图确认后绑定实际资产编号与版本、预演索引与对应项。素材槽位发生改变时重新编译、核对中文并确认组方案。按目标限制导出；不执行模型生成。
+## 创作与规划
 
-用户更换工具时，重新保存 adapter 并编译组文本；镜号、中文导演稿、预演源和资产文件保留。新工具限制不同，可以调整分组，但需重查受影响的提示词、组预演与衔接。当前没有为未实现的适配器伪造原生格式。
+1. 按 [二次创作](creative-development.md) 写完整改编场景与导演组意图，确认后编写中文电影分镜。
+2. 划分视频段任务并检查目标输入限制。当前 AIMixer H3 参考流程每任务计划≤15秒，绑定参考视频每段2–15秒、单任务合计≤15秒；最多9图、3视频、共12项参考。导演组和全片审核串联片没有这个15秒上限。其他系统先核对模式限制，不继承H3预算。
+3. 任务从0计时并编译完整目标提示词及中文对照；导演组保留总体时间轴、每段起点、叙事意图与前后衔接。不能给每段都安排一个假结局或为了凑满15秒加戏。
+4. 在项目页同时审核导演组、内部任务、逐镜中英稿，再确认布局和可选预演，随后生产基准与扩展资产。
+5. 每导演组导出一个独立导演包：包内多个任务依次生成，在目标导演台合并为本组输出。多个导演组分别导入和合并，不把全片全部任务塞入同一个合并输出。
 
-## 数据与命令
+53秒示例可以由13+14+14+12秒四个任务组成；48秒示例可由12+12+12+12秒组成。这是计时结构示例，不是推荐的电影剪辑节奏。真实任务时长来自台词、动作和反应估时。模型帧对齐可能使最终合并时长略增，导出报告列出原计划与对齐后时长，需在目标端检查尾帧。
 
-状态独立保存在项目 `groups/state.json`，历史位于 `groups/history/`，均登记为交接文档，不扩展 manifest 顶层字段。分组修改采用分组 revision 和审核项目 project_revision 双重检查；源分镜、目标格式或剧情变更会使旧方案失效。
+## 方案数据
 
-保存方案的 JSON 例子（必须替换为真实镜号并覆盖全部镜头）：
+`groups-apply` 输入字段：revision、project_revision、adapter、shared_references、groups、director_groups。
+
+- adapter 为 generic 或 aimixer-h3；其他目标先使用通用包，不伪造原生格式。
+- groups 每项仍含 id、title、shots、intent_zh、continuity_in、continuity_out、references。
+- director_groups 每项含 id、title、tasks、intent_zh、continuity_in、continuity_out。例如：
 
 ```json
-{
-  "revision": 0,
-  "project_revision": 12,
-  "adapter": "aimixer-h3",
-  "shared_references": [
-    {"key":"hero","kind":"image","asset":"CHAR_HERO_HEAD","version":1}
-  ],
-  "groups": [{
-    "id":"G01","title":"进门与取水","shots":["SHOT_01","SHOT_02"],
-    "intent_zh":"先建立普通顾客的行动，再让异常停顿产生疑问。",
-    "continuity_in":"男人在前门外，尚未持有水瓶。",
-    "continuity_out":"男人持水瓶站在顾客区，冰柜门关闭。",
-    "references":[
-      {"key":"store","kind":"image","asset":"SCENE_STORE_LEFT","version":1},
-      {"key":"motion","kind":"video","index":"previs/groups/RUN/index.json","item":"G01"}
-    ]
-  }]
-}
+{"id":"D01","title":"来客与第一次预警","tasks":["T01","T02","T03","T04"],"intent_zh":"从夜班日常进入不安，以她决定核实危险结束。","continuity_in":"她独自复习，尚无异常信息。","continuity_out":"她开始核实男人的警告；不提前表现对循环的理解。"}
 ```
 
-图片必须引用资产编号和确切版本，不接受任意未登记图片路径。视频引用本工具已校验的逐镜或组预演索引：逐镜时 item 为镜号，组预演时 item 为组号；只选择纯摄影机视频。公共素材当前仅支持图片，预演视频按组挂载。本 skill 不生成配音，当前分组导出也不提供音频素材绑定。
+图片引用 `{key,kind:"image",asset,version}`；视频引用 `{key,kind:"video",index,item}`，指向工具已验证的逐镜／任务预演索引。只选择纯摄影机候选，不把整个53秒导演组预演当作单次输入。公共素材仅支持图片，实际素材按版本和SHA-256核验，缺失保持待绑定。
+
+`groups/state.json` 保存两层结构、版本及批准，旧版状态只读时不重写。旧短组解释为任务，页面提示补充导演组；不得自动把所有任务归到一个剧情段落或沿用旧批准。保存新版方案保留历史并撤销组批准，要求重新核对中英稿及衔接；原逐镜内容和图片不覆盖。
+
+## 命令与审阅
 
 ```sh
 .venv/bin/python scripts/svd.py groups-apply PROJECT PLAN_JSON
-.venv/bin/python scripts/svd.py groups-request PROJECT work/groups-request.json
-# Codex 实际阅读全部上下文并编译后：
-.venv/bin/python scripts/svd.py groups-sync PROJECT SYNC_JSON
-.venv/bin/python scripts/svd.py groups-confirm PROJECT --evidence '用户实际确认当前分组及中英稿的原话'
+.venv/bin/python scripts/svd.py groups-request PROJECT work/request.json
+.venv/bin/python scripts/svd.py groups-sync PROJECT work/sync.json
+.venv/bin/python scripts/svd.py groups-confirm PROJECT --evidence '用户实际确认当前两层方案及中英稿'
 .venv/bin/python scripts/svd.py groups-check PROJECT
 .venv/bin/python scripts/svd.py groups-previs PROJECT previs/runs/RUN/exports/EXPORT/index.json
-.venv/bin/python scripts/svd.py groups-package PROJECT DELIVERY.mmxpack.zip
-# 尚未确认或缺少素材的明确阶段交付：
-.venv/bin/python scripts/svd.py groups-package PROJECT DELIVERY.draft.mmxpack.zip --draft
+.venv/bin/python scripts/svd.py groups-package PROJECT delivery/D01.mmxpack.zip --director-group D01
+.venv/bin/python scripts/svd.py groups-bundle PROJECT delivery/all-director-groups.zip
 ```
 
-`groups-request` 输出最新两种 revision、源分镜指纹、组内／原片时间、原中文与目标文本、素材槽位。同步 JSON 包含同一组 revision、project_revision、storyboard_fingerprint，以及完整 groups 列表；每项为 id、text、translation_zh、check_note。每组必须有完整中文对照与实际导演检查说明。H3 会检查六部分、从1开始的 Shot 编号、切点时间以及引用槽位，不能用此机械检查代替语义检查。
+单个导演组可省略 --director-group；有多个时必须明确选择或用 groups-bundle。总ZIP是运输包，先解压再分别导入其中的 D01.mmxpack.zip、D02.mmxpack.zip，不能把总ZIP直接当成原生导演包。通用模式每组输出通用ZIP，提供中英稿、任务次序和素材绑定，可手动逐段生成后剪辑。所有任务正式导出需真实资产检查、用户确认和项目校验通过；--draft只放宽未完成项，不放宽输入尺寸／时长限制。
 
-网页显示当前镜头所属组、组内时间、系统原文和中文对照；可编辑组名、成员镜号、导演意图和承接说明。每次保存会检查全段覆盖并撤销组确认，返回 Codex 说“同步分组”。跨组挪镜、拆组、合组建议让 Codex 一次提交完整方案；逐组保存不能暂时破坏全段覆盖。网页未保存组稿在会话中保留，旧版本草稿供手工合并。实际确认可在网页点击，也可在当前对话回复“确认分组”。
+同步包仍为 revision、project_revision、storyboard_fingerprint、groups（逐任务 id/text/translation_zh/check_note）。request同时给出导演组完整意图与任务预算；每段目标文本必须结合所属导演组写。任务镜头编号从1开始，切点为段内时间，中英文一起确认。网页可编辑两层名称、意图、进入／退出状态及成员列表；跨组移项须一次提交完整覆盖方案，保存后回Codex同步。不能替用户点击生产项目的批准。
 
-## AIMixer 适配约定
+## 预演和输出边界
 
-对照 [AIMixer 导入源码](https://github.com/AIMixer/ComfyUI_MiniMaxH3_Director/blob/52f8fb7b8d8eb6bebf33ebb534827efa8f95484c/director/pack.py)，适配版本记录为 `52f8fb7b8d8eb6bebf33ebb534827efa8f95484c`。
+groups-previs 为内部任务生成短预演，并为导演组生成整体节奏审核预演。索引以 level=task/director 区分；导演组级视频不允许作为任务参考绑定。缺少成员镜头则该任务／导演组显示待完成，不拼出假完整视频。重组会使关联预演证据过期，按最新版本复核。
 
-- 任务为 r2v，每个通用组映射到一个 asset_groups 子目录，保存 group.json 和本组媒体。
-- 公共图片占据 Picture 1 起的槽位，组内图片接续编号。检查提示词中的编号与最终文件映射，不能在每组重新从1覆盖公共角色。
-- 原生目录使用 ASCII，pack.json 指定 format、formatVersion 和 taskType；不手写 timeline.json，让上游导入器组装时间轴。
-- 中文对照、原镜号／组内时间、素材用途、原始资产版本与 SHA-256 放在 extra/ 中，不塞进模型英文提示词。
-- 原时长保留为 durationSec。frameCount 按当前上游24fps、17k+5规则向上对齐，报告尾部增加时长；不修改原分镜或加速预演。画布采用导演台默认864×480，导入后按实际部署调整，当前不声称自动选择最优分辨率。
-- 每次任务最多9图、3视频，单段参考视频2–15秒且视频总时长≤15秒；一秒特写可与邻镜预演合成合规组，不能单独作为不合规视频输入。超限需重新分组或下游细分。多个组可批量运行，限制作用于每个组，不是整个导演包。
-- 公共提示词留空，每组写完整六部分，避免把多份主体定义或声景段盲目串接。公共图片仍共享。
-- 段间引导默认关闭，用户依连续动作需要在目标导演台开启；切镜或时间省略不自动开启。当前不自动注入上段生成结果，也不生产最终视频。
+本skill不采样最终AI视频，也不自动操控目标导演台的合并按钮。它交付每组独立任务包及合并顺序，供目标端执行。不能把53秒预演说成已生成53秒最终影片。
 
-`groups-check` 检查组计划、素材状态和输入约束；正式 `groups-package` 还要求整个项目的前置确认、资产检查及关卡无待办。草稿可供查看结构，缺失素材不伪造文件、不改编号；草稿也不能包含超限槽位或超限参考视频。所有导出均保留 target_h3_validated=false。
+## 当前 AIMixer 原生映射与验证
 
-## 验证范围
+对照本地检出的 [AIMixer 导入源码](https://github.com/AIMixer/ComfyUI_MiniMaxH3_Director/blob/52f8fb7b8d8eb6bebf33ebb534827efa8f95484c/director/pack.py)，适配版本固定为该提交。
 
-项目包含可选的上游契约测试。设置 `SVD_AIMIXER_SOURCE` 指向已检出的 AIMixer 仓库后运行 unittest；测试执行其真实 ZIP 解压、时间轴组装、媒体复制和路径重写函数，仅替换宿主路径与HTTP传输导入，不启动 ComfyUI 或模型采样。普通机器未提供该源码时此项会跳过，不要求把导演台安装进 skill 的虚拟环境。
+一个原生 `.mmxpack.zip` = 一个导演组；包内 `asset_groups/0001/group.json` 等分别是短任务，导入器映射为 segments。提示词按任务保留完整六部分，共用图片占先前槽位，本地图片接续。每个包重新从0开始时间轴，exportMode=all；目标端实际合并效果仍需测试。不要把源码里的 asset_groups 误认为本skill的导演组。
 
-格式导入测试通过不等于视频生成通过。用户目标机器的 ComfyUI、节点版本、显存、帧率及最终推理效果仍需实测；未来升级上游后重新运行契约测试。
+frameCount依上游24fps、17k+5对齐；durationSec保存创作秒数。默认画布864×480，连续性引导关闭，使用者按实际工作流调整。extra/director_group.json、shot_map.json、delivery.json 保存导演组意图、原片／任务切点、中文对照、目标输出名称、原计划与对齐后时长。所有结果保留 target_h3_validated=false。
+
+可选契约测试通过 SVD_AIMIXER_SOURCE 指向该源码，验证真实导入、时间轴组装、媒体复制与路径重写；不启动ComfyUI或H3推理。适配器升级后重新验证，不能将源码导入成功等同于最终视频效果验证。

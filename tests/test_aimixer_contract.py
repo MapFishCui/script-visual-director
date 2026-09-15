@@ -14,6 +14,7 @@ import unittest
 from unittest.mock import patch
 
 import test_groups
+import test_director_groups
 import group_package
 
 
@@ -55,6 +56,19 @@ class AIMixerContract(unittest.TestCase):
             for ref in timeline['global']['refs']+segment['refs']:
                 self.assertTrue((input_dir/ref['imageFile']).is_file())
             self.assertEqual(json.loads((extracted/'extra/shot_map.json').read_text())[0]['shots'][0]['shot'],'S1')
+            long_case=test_director_groups.DirectorGroupCase();long_case.setUp()
+            self.addCleanup(long_case.doCleanups);long_case.prepare()
+            long_pack=long_case.base/'D01.mmxpack.zip'
+            group_package.package(long_case.root,long_pack,director_group='D01')
+            long_extract=case.base/'long-extracted';module.extract_pack_zip(long_pack,long_extract)
+            merged=module.import_extracted_pack(long_extract)
+            self.assertEqual(merged['missing'],[])
+            self.assertEqual(len(merged['timeline']['segments']),4)
+            self.assertEqual([t['id'] for t in merged['timeline']['segments']],['T01','T02','T03','T04'])
+            self.assertEqual(merged['timeline']['output']['exportMode'],'all')
+            self.assertEqual(sum(t['frameCount'] for t in merged['timeline']['segments']),
+                             sum(group_package.aligned_frames(sec) for sec in [13,14,14,12]))
+
 
 
 if __name__=='__main__':unittest.main()
