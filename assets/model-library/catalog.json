@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "assets": [
+    {
+      "id": "blender-snow",
+      "version": "3",
+      "title": "Snow v3 — Blender Studio",
+      "author": "Blender Studio / Blender Foundation",
+      "source_url": "https://studio.blender.org/characters/snow/v3/",
+      "download_url": "https://studio.blender.org/download-source/files/ca/cab3fc59bce48d1b8090109016ac16f0/cab3fc59bce48d1b8090109016ac16f0.zip",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Snow Rig © Blender Foundation | studio.blender.org",
+      "license_evidence": "Official Snow v3 page links CC-BY 4.0 and states the required credit. Verified 2026-09-16."
+    }
+  ]
+}

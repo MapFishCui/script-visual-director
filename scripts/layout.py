@@ -163,7 +163,7 @@ def render_layout(data, out, font=None):
     for camera in [None]+data["cameras"]:
         canvas = Canvas(1280, max(960, 320+len(data["boxes"])*49), font)
         canvas.text((40, 26), data["name"], 30)
-        subtitle = f"{data['id']} · v{data['version']} · 单位 m · " + (f"{camera['shot']} / {camera['id']}" if camera else "基础布局")
+        subtitle = f"{data['id']} · v{data['version']} · 单位 m · " + (f"{camera['shot'] or '调度观察'} / {camera['id']}" if camera else "基础布局")
         canvas.text((42, 72), subtitle, 17, "#60738a")
         scale = min(820/data["extent"][0], 680/data["extent"][1])
         origin = (76, 816)

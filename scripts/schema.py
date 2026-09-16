@@ -54,10 +54,10 @@ MANIFEST = obj({
 BOX = obj({"id": ID, "label": TEXT, "kind": enum("wall", "furniture", "prop", "door", "window", "actor", "light"),
            "center": VEC3, "size": {"type": "array", "items": POSITIVE, "minItems": 3, "maxItems": 3},
            "rotation": NUMBER, "solid": {"type": "boolean"}, "source": SOURCE})
-CAMERA = obj({"id": ID, "shot": ID, "position": VEC3, "target": VEC3,
+CAMERA = obj({"id": ID, "shot": {"anyOf": [ID, {"type":"null"}]}, "position": VEC3, "target": VEC3,
               "yfov": {"type": "number", "exclusiveMinimum": 1, "exclusiveMaximum": 170},
               "aspect": POSITIVE, "path": arr(VEC3), "source": SOURCE})
-PATH = obj({"id": ID, "actor": ID, "shot": ID, "points": arr(VEC3, 2),
+PATH = obj({"id": ID, "actor": ID, "shot": {"anyOf": [ID, {"type":"null"}]}, "points": arr(VEC3, 2),
             "clearance": {"type": "number", "minimum": 0}, "source": SOURCE})
 LAYOUT = obj({"schema_version": {"const": 1}, "id": ID, "version": VERSION, "name": TEXT,
               "units": {"const": "m"}, "extent": {"type": "array", "items": POSITIVE, "minItems": 2, "maxItems": 2},

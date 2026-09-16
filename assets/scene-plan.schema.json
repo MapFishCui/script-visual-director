@@ -1,0 +1,1510 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "fps": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60
+    },
+    "duration": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "scene": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "fps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "frames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "substeps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "collision_tolerance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.05
+        },
+        "ik_tolerance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "position": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "rotation_z": {
+                    "type": "number"
+                  },
+                  "keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "frame": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "position": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "targets": {
+                          "type": "object",
+                          "propertyNames": {
+                            "enum": [
+                              "hand.L",
+                              "hand.R",
+                              "hand.L/pole",
+                              "hand.R/pole",
+                              "foot.L",
+                              "foot.R",
+                              "foot.L/pole",
+                              "foot.R/pole"
+                            ]
+                          },
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "required": [
+                        "frame"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "physics": {
+                    "enum": [
+                      "none",
+                      "static",
+                      "dynamic",
+                      "kinematic"
+                    ]
+                  },
+                  "mass": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "category": {
+                    "enum": [
+                      "structure",
+                      "prop"
+                    ]
+                  },
+                  "type": {
+                    "const": "box"
+                  },
+                  "size": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "size"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "position": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "rotation_z": {
+                    "type": "number"
+                  },
+                  "keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "frame": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "position": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "targets": {
+                          "type": "object",
+                          "propertyNames": {
+                            "enum": [
+                              "hand.L",
+                              "hand.R",
+                              "hand.L/pole",
+                              "hand.R/pole",
+                              "foot.L",
+                              "foot.R",
+                              "foot.L/pole",
+                              "foot.R/pole"
+                            ]
+                          },
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "required": [
+                        "frame"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "physics": {
+                    "enum": [
+                      "none",
+                      "static",
+                      "dynamic",
+                      "kinematic"
+                    ]
+                  },
+                  "mass": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "category": {
+                    "enum": [
+                      "structure",
+                      "prop"
+                    ]
+                  },
+                  "type": {
+                    "const": "wall_opening"
+                  },
+                  "width": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "height": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "thickness": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "opening": {
+                    "type": "object",
+                    "properties": {
+                      "width": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "height": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "offset": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "width",
+                  "height",
+                  "thickness",
+                  "opening"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "position": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "rotation_z": {
+                    "type": "number"
+                  },
+                  "keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "frame": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "position": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "targets": {
+                          "type": "object",
+                          "propertyNames": {
+                            "enum": [
+                              "hand.L",
+                              "hand.R",
+                              "hand.L/pole",
+                              "hand.R/pole",
+                              "foot.L",
+                              "foot.R",
+                              "foot.L/pole",
+                              "foot.R/pole"
+                            ]
+                          },
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "required": [
+                        "frame"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "physics": {
+                    "enum": [
+                      "none",
+                      "static",
+                      "dynamic",
+                      "kinematic"
+                    ]
+                  },
+                  "mass": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "category": {
+                    "enum": [
+                      "structure",
+                      "prop"
+                    ]
+                  },
+                  "type": {
+                    "const": "stairs"
+                  },
+                  "steps": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "width": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "rise": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "tread": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "steps",
+                  "width",
+                  "rise",
+                  "tread"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "position": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "rotation_z": {
+                    "type": "number"
+                  },
+                  "keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "frame": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "position": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "targets": {
+                          "type": "object",
+                          "propertyNames": {
+                            "enum": [
+                              "hand.L",
+                              "hand.R",
+                              "hand.L/pole",
+                              "hand.R/pole",
+                              "foot.L",
+                              "foot.R",
+                              "foot.L/pole",
+                              "foot.R/pole"
+                            ]
+                          },
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "required": [
+                        "frame"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "physics": {
+                    "enum": [
+                      "none",
+                      "static",
+                      "dynamic",
+                      "kinematic"
+                    ]
+                  },
+                  "mass": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "category": {
+                    "enum": [
+                      "structure",
+                      "prop"
+                    ]
+                  },
+                  "type": {
+                    "const": "door"
+                  },
+                  "width": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "height": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "thickness": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "angle": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "width",
+                  "height",
+                  "thickness"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "position": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "rotation_z": {
+                    "type": "number"
+                  },
+                  "keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "frame": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "position": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "targets": {
+                          "type": "object",
+                          "propertyNames": {
+                            "enum": [
+                              "hand.L",
+                              "hand.R",
+                              "hand.L/pole",
+                              "hand.R/pole",
+                              "foot.L",
+                              "foot.R",
+                              "foot.L/pole",
+                              "foot.R/pole"
+                            ]
+                          },
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "required": [
+                        "frame"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "type": {
+                    "const": "actor"
+                  },
+                  "height": {
+                    "type": "number",
+                    "minimum": 0.5,
+                    "maximum": 3
+                  },
+                  "pole_angles": {
+                    "type": "object",
+                    "propertyNames": {
+                      "enum": [
+                        "hand.L",
+                        "hand.R",
+                        "foot.L",
+                        "foot.R"
+                      ]
+                    },
+                    "additionalProperties": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "position": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "rotation_z": {
+                    "type": "number"
+                  },
+                  "keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "frame": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "position": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "targets": {
+                          "type": "object",
+                          "propertyNames": {
+                            "enum": [
+                              "hand.L",
+                              "hand.R",
+                              "hand.L/pole",
+                              "hand.R/pole",
+                              "foot.L",
+                              "foot.R",
+                              "foot.L/pole",
+                              "foot.R/pole"
+                            ]
+                          },
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "required": [
+                        "frame"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "type": {
+                    "const": "anchor"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "position": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "rotation_z": {
+                    "type": "number"
+                  },
+                  "keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "frame": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "position": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "targets": {
+                          "type": "object",
+                          "propertyNames": {
+                            "enum": [
+                              "hand.L",
+                              "hand.R",
+                              "hand.L/pole",
+                              "hand.R/pole",
+                              "foot.L",
+                              "foot.R",
+                              "foot.L/pole",
+                              "foot.R/pole"
+                            ]
+                          },
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "required": [
+                        "frame"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "type": {
+                    "const": "asset"
+                  },
+                  "asset_key": {
+                    "type": "string"
+                  },
+                  "model": {
+                    "type": "string"
+                  },
+                  "collection": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "enum": [
+                      "actor",
+                      "prop",
+                      "structure"
+                    ]
+                  },
+                  "scale": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "pose_keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "frame": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "rig": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "bone": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "rotation": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "location": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "properties": {
+                          "type": "object",
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z0-9_ .-]+$"
+                          },
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "frame",
+                        "rig",
+                        "bone"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "collision_boxes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "position": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "size": {
+                          "type": "array",
+                          "items": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        }
+                      },
+                      "required": [
+                        "position",
+                        "size"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "asset_key",
+                  "model",
+                  "category"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 500
+        },
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "actor": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+              },
+              "effector": {
+                "enum": [
+                  "hand.L",
+                  "hand.R",
+                  "foot.L",
+                  "foot.R"
+                ]
+              },
+              "target": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "tolerance": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "actor",
+              "effector",
+              "target",
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "actor": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+              },
+              "effector": {
+                "enum": [
+                  "hand.L",
+                  "hand.R",
+                  "foot.L",
+                  "foot.R"
+                ]
+              },
+              "object": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+              },
+              "offset": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            },
+            "required": [
+              "actor",
+              "effector",
+              "object"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "allowed_contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "actor": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+              },
+              "part": {
+                "enum": [
+                  "torso",
+                  "head",
+                  "upper_arm.L",
+                  "upper_arm.R",
+                  "forearm.L",
+                  "forearm.R",
+                  "thigh.L",
+                  "thigh.R",
+                  "shin.L",
+                  "shin.R"
+                ]
+              },
+              "object": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "max_penetration": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.05
+              }
+            },
+            "required": [
+              "actor",
+              "part",
+              "object",
+              "start",
+              "end",
+              "max_penetration"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "preview": {
+          "type": "object",
+          "properties": {
+            "position": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "target": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 64,
+              "maximum": 2048
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 64,
+              "maximum": 2048
+            },
+            "frame": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "beats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+              },
+              "duration": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start_state": {
+                "type": "string",
+                "minLength": 1
+              },
+              "end_state": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "duration",
+              "action",
+              "start_state",
+              "end_state"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "components"
+      ],
+      "additionalProperties": false
+    },
+    "actors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "adapter": {
+            "enum": [
+              "snow-v3"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "adapter"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "anchors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "object": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "offset": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "rotation": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "offset",
+          "rotation"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "object": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "intent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "at": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "after": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "offset": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "after"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "duration": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "origin": {
+            "enum": [
+              "explicit",
+              "inferred",
+              "proposed"
+            ]
+          },
+          "from_state": {
+            "type": "string"
+          },
+          "to_state": {
+            "type": "string"
+          },
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "position": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "rotation": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "targets": {
+                  "type": "object",
+                  "propertyNames": {
+                    "enum": [
+                      "hand.L",
+                      "hand.R",
+                      "foot.L",
+                      "foot.R"
+                    ]
+                  },
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "position": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "rotation": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "pole": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    },
+                    "required": [
+                      "position",
+                      "rotation",
+                      "pole"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "time",
+                "position",
+                "rotation",
+                "targets"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "end_position": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "end_angle": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "kind",
+          "intent",
+          "start",
+          "duration",
+          "origin"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "cameras": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "target": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "offset": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "target_offset": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "lens": {
+            "type": "number",
+            "minimum": 12,
+            "maximum": 200
+          },
+          "follow": {
+            "type": "boolean"
+          },
+          "start": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "at": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "after": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "offset": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "after"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "duration": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "target",
+          "offset",
+          "target_offset",
+          "lens",
+          "follow",
+          "start",
+          "duration"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "contacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "actor": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "effector": {
+            "enum": [
+              "hand.L",
+              "hand.R",
+              "foot.L",
+              "foot.R"
+            ]
+          },
+          "anchor": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "start": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "at": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "after": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                  },
+                  "offset": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "after"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "duration": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "actor",
+          "effector",
+          "anchor",
+          "start",
+          "duration"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "fps",
+    "duration",
+    "scene",
+    "actors",
+    "actions",
+    "cameras"
+  ],
+  "additionalProperties": false
+}

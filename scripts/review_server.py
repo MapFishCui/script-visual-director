@@ -126,10 +126,10 @@ def make_server(root, port=0, token=None):
                     if set(data) != {'revision','project_revision'}: raise ValueError('Unexpected group confirmation fields')
                     import groups
                     groups.confirm(root,data['revision'],data['project_revision'],'用户在审核页点击确认分组方案与中英文本')
-                elif path == '/api/previs-choice':
+                elif path in ('/api/previs-choice','/api/blocking-choice'):
                     if set(data) != {'choice', 'revision'}: raise ValueError('Unexpected choice fields')
                     from previs import choose
-                    choose(root, data['choice'], data['revision'], '用户在本地审核页面选择：' + ('跳过预演，继续资产流程；未验证动态空间' if data['choice']=='skip' else '生成预演'))
+                    choose(root, data['choice'], data['revision'], '用户在本地审核页面选择：' + (('跳过整场调度白模，继续分镜；未验证动态空间' if path=='/api/blocking-choice' else '跳过逐镜预演，继续资产；未验证摄影机预演') if data['choice']=='skip' else ('生成整场调度白模' if path=='/api/blocking-choice' else '生成逐镜预演')), phase='blocking' if path=='/api/blocking-choice' else 'previs')
                 else:
                     self.json_response({'error': 'Not found'}, 404); return
                 self.json_response(review.view(root))

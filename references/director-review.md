@@ -1,13 +1,13 @@
 # 导演稿检查与版本协议
 
-阅读 narrative-and-camera.md 后使用本协议。Python 仅发现字段缺项与少量疑点；Codex 必须实际评估剧情、人物、表演、语气和时间，不能通过填“通过”来完成任务。检查不是用户批准，也不是目标模型运行验证。
+阅读 narrative-and-camera.md 后使用本协议。Python 仅发现字段缺项与少量疑点；助手 必须实际评估剧情、人物、表演、语气和时间，不能通过填“通过”来完成任务。检查不是用户批准，也不是目标模型运行验证。
 
 ## 中文输入
 
-新项目在建立 manifest 镜号后，提供 JSON 对象 `{ "SHOT_01": { ...完整中文字段... } }`：
+新流程在首次中文导演稿确认前使用 review-storyboard 导入（见 layout-first-workflow.md）；以下 review-init 示例仅用于明确选择 storyboard-first-v1 的旧工作方式。中文映射为 JSON 对象 `{ "SHOT_01": { ...完整中文字段... } }`：
 
 ```sh
-.venv/bin/python scripts/svd.py review-init PROJECT --storyboard-file work/storyboard.json --system-file work/system.json
+.venv/bin/python scripts/svd.py review-init PROJECT --storyboard-file work/storyboard.json --system-file work/system.json --workflow storyboard-first-v1
 ```
 
 每镜字段为 purpose、description、framing、action、camera、dialogue、continuity、psychology、performance、delivery、rhythm、duration。除 duration 为正数秒之外，均为文本。dialogue、delivery 对无台词镜明确写无发声或画面文字，不能填虚构声音。物件插镜不强加角色心理或表演；不适用时简短标明，信息功能写在相应叙事依据。
@@ -80,3 +80,14 @@ review-check 的 ready 只表示字段齐备且记录了当前版本的检查；
 角色反应须有该角色实际获得信息的依据；画外或私人信息不自动成为在场所有角色的认知。重复等待、重复眼神确认需要作为相邻镜头整体审查。时长可解释不等于观看有效；“不笑、不后退”等限制不能单独替代人物策略与可见表演。持续固定或持续运动均不自动违规，检查实际观看变化而非比例。
 
 不得从原字段批量拼接通过结论。先找到可能不成立的地方，再判断保留、修订或待验证；把真实问题写到对应检查，未解决不填 pass。文字阶段已经能发现的矛盾现在解决，空间参数尚未知的部分明确留给布局；不把所有疑点推迟到预演，也不冒称已有样片。审美判断不增加正则评分或新的强制表格。
+
+## 从官方动画工作流借鉴的连续性观察
+
+参考 [官方 skill 接入说明](h3-official-skill.md)，只把适用判断融入已有 continuity / performance / adaptation 记录：
+
+- 连读相邻镜头的结束与开始状态，核对持物、姿态、视线、情绪与声音如何衔接；允许有目的的省略，不规定每镜都接同一种动作。
+- 人物离开画面后，仍在与当前行动有关时保留其所在位置和行动状态，不能把未入镜理解成从场景消失。
+- 对照场景地标、人物位置及照明变化。摄影机换边会改变银幕左右，不能机械要求所有镜头中地标始终在同一侧。
+- 旁白与画内说话分别核对发声者、语气和口部行为；具体反应应与角色获得的信息一致。节奏按行动与声音实际需要安排，不强制每秒填一个反应。
+
+这些是人工审阅角度，不新增强制风格、镜头比例或评分公式；动画 skill 中的卡通夸张要求不自动应用于电影写实项目。

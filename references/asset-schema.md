@@ -22,7 +22,7 @@ Apple 芯片机器若 uv 自身是 Intel 程序，可能误选 x86_64 wheel；�
 .venv/bin/python scripts/svd.py queue PROJECT
 ```
 
-`init` 只复制原文、创建 manifest，不假装解析剧本。Codex 按参考规范撰写分析、视觉指南、交接文档和 manifest。读取 Word/PDF 剧本时先用环境中的相应能力提取文本，并保留原文对应关系。
+`init` 只复制原文、创建 manifest，不假装解析剧本。助手 按参考规范撰写分析、视觉指南、交接文档和 manifest。读取 Word/PDF 剧本时先用环境中的相应能力提取文本，并保留原文对应关系。
 
 机器结构以 `scripts/schema.py` 为准；完整可运行示例由 `examples/make_demo.py` 创建。JSON 不允许未知字段和非有限数值，编号只用英文字母、数字、下划线和短横线，路径用项目内 POSIX 相对路径。
 
@@ -59,17 +59,17 @@ Apple 芯片机器若 uv 自身是 Intel 程序，可能误选 x86_64 wheel；�
 ## 出图后登记与版本修改
 
 ```sh
-.venv/bin/python scripts/svd.py register PROJECT CHAR_DAD --image GENERATED_IMAGE --tool image_gen
+.venv/bin/python scripts/svd.py register PROJECT CHAR_DAD --image GENERATED_IMAGE --tool ACTUAL_IMAGE_TOOL_NAME
 .venv/bin/python scripts/svd.py review PROJECT CHAR_DAD --note '已检查脸部、年龄和服装一致性'
 .venv/bin/python scripts/svd.py approve PROJECT CHAR_DAD --note '用户明确确认该版本的原回复摘要'
 .venv/bin/python scripts/svd.py approve-gate PROJECT GATE_PARENTS --evidence '用户确认这两张父母基准图'
 .venv/bin/python scripts/svd.py revise PROJECT CHAR_DAD --reason '根据用户要求调整发型'
 ```
 
-revise 创建新版本，不修改旧文件；旧版 superseded，直接及间接资产依赖 stale，受影响关卡回到 pending。新版本继承 prompt、依赖与关卡以便编辑，但不会自动改成最新参考版本；Codex 必须检查并明确更新依赖，避免未经复核就跟随新设计。
+revise 创建新版本，不修改旧文件；旧版 superseded，直接及间接资产依赖 stale，受影响关卡回到 pending。新版本继承 prompt、依赖与关卡以便编辑，但不会自动改成最新参考版本；助手 必须检查并明确更新依赖，避免未经复核就跟随新设计。
 
 `validate` 返回 errors（数据或文件错误）与 pending（未完成事项）；规划阶段 pending 不导致失败。`--strict` 要求两者均为空。`queue` 只列出实际可生成的项目，已生成图片应检查或 revise，不重复覆盖。
 
-数据结构表达和校验依赖，但不能判断用户的文字是否真是确认、心理推断是否合理、图片是否好看；这些仍由 Codex 结合实际对话和图片负责。
+数据结构表达和校验依赖，但不能判断用户的文字是否真是确认、心理推断是否合理、图片是否好看；这些仍由助手结合实际对话和图片负责。
 
 剧集共享库与本集继承以独立 library.json 和已登记的 series/inheritance/*.json 保存，不扩展 manifest 根字段。具体流程见 [跨集资产继承](series-continuity.md)。

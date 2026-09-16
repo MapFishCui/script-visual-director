@@ -111,7 +111,7 @@ def render_preview(boxes, camera, output, font=None):
                 raster([poly[0], poly[i], poly[i+1]], shade)
     draw = ImageDraw.Draw(image)
     draw.rectangle((0, 0, width, 38), fill="#23334a")
-    draw.text((12, 8), f"{camera['id']} · {camera['shot']} · 几何预览 / 待人工检查", font=ImageFont.truetype(font_path(font), 16), fill="white")
+    draw.text((12, 8), f"{camera['id']} · {camera['shot'] or '调度观察'} · 几何预览 / 待人工检查", font=ImageFont.truetype(font_path(font), 16), fill="white")
     image.save(output)
 
 

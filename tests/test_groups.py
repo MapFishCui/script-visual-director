@@ -33,7 +33,7 @@ class GroupsCase(unittest.TestCase):
     def compile_packet(self):
         request=groups.request(self.root)
         text=('subject_definitions:\n<Subject 1> is the father in <Picture 1>; <Picture 2> provides the mother.\n'
-              'summary:\nSynthetic test.\nretention_analysis:\nTest-only refs.\ndetailed_description:\n'
+              'summary:\n[reference generation] Synthetic test.\nretention_analysis:\n<Subject 1>: fully_preserved - test appearance retained.\ndetailed_description:\n'
               '[Shot 1] A static test shot.\noverall_soundscape:\nSilence.\nnon_diegetic_music:\nNone.')
         return {k:request[k] for k in ('revision','project_revision','storyboard_fingerprint')} | {
             'groups':[{'id':g['id'],'text':text,'translation_zh':'仅供测试：父亲与母亲同处固定画面，无声无配乐。',

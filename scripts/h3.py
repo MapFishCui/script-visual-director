@@ -3,6 +3,7 @@
 Official contract: MiniMaxAI/MiniMax-H3 docs/VIDEO_PROMPT_WRITING_GUIDE_ref_en.md.
 This checks syntax, never cinematic quality or actual inference fidelity.
 """
+import h3_contract
 import argparse
 import json
 import math
@@ -34,6 +35,7 @@ def validate(text, cuts, labels=()):
                 for i,h in enumerate(headers)}
     if text[:headers[0].start()].strip() or any(not v for v in sections.values()):
         errors.append('H3章节不能为空或含未知前缀')
+    errors.extend(h3_contract.reference_errors(sections))
     body = sections['detailed_description']
     marks = list(SHOT.finditer(body))
     if [int(m.group(1)) for m in marks] != list(range(1,len(cuts)+1)):
@@ -69,6 +71,9 @@ def compile_task(spec):
     delivery,voiceover}; quoted dialogue has a single canonical source string.
     """
     if spec.get('mode') != 'Ref2VA': raise ValueError('当前确定性编译器仅支持Ref2VA')
+    routing = h3_contract.route(spec['media']) if 'media' in spec else None
+    if routing and routing['mode'] != spec['mode']:raise ValueError('素材用途与所选 H3 模式不匹配：'+routing['mode'])
+    if routing and set(routing['labels']) != set(spec.get('labels',[])):raise ValueError('用途记录与实际声明槽位不一致')
     shots = spec['shots']
     if not shots: raise ValueError('镜头不能为空')
     cuts=[]; cursor=0; en=[]; zh=[]
@@ -98,15 +103,19 @@ def compile_task(spec):
         result[key]='\n\n'.join(k+':\n'+ ('\n'.join(parts) if k=='detailed_description' else spec['sections'][k][lang]) for k in SECTIONS)
     errors=validate(result['text'],cuts,spec.get('labels',[]))
     if errors:raise ValueError('; '.join(errors))
+    if routing:
+        tasks=[x.strip() for x in re.match(r'\[([^\]]+)\]',spec['sections']['summary']['en']).group(1).split('+')]
+        if set(tasks)!=set(routing['task_types']):raise ValueError('summary 任务类型与素材实际用途不一致')
+        result['reference_routing']=routing
     result.update(duration=cursor,syntax_validated=True,target_h3_validated=False)
     return result
 
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('input');p.add_argument('output');a=p.parse_args()
+    p.add_argument('input');p.add_argument('output');p.add_argument('--route',action='store_true',help='Only route explicit media roles to an official H3 mode');a=p.parse_args()
     try:
-        result=compile_task(json.loads(Path(a.input).read_text()))
+        data=json.loads(Path(a.input).read_text());result=h3_contract.route(data['media']) if a.route else compile_task(data)
         Path(a.output).write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     except (ValueError,KeyError,TypeError,OSError) as e:
         p.exit(2,str(e)+'\n')

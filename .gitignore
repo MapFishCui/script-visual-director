@@ -25,11 +25,14 @@ htmlcov/
 # Generated production projects, renders and scratch files
 # Keep actual productions here or outside this skill repository.
 /outputs/
+/productions/
 /work/
 /runs/
 /render-output/
-*.blend1
-*.blend2
+# Blender numbered backups; keep intentional .blend template sources eligible
+*.blend[0-9]*
+# Interrupted atomic writes from the project tools
+.svd-*
 *.log
 **/review/write.lock
 
@@ -46,3 +49,7 @@ Desktop.ini
 
 # Deliberately keep requirements.lock, agents/, assets/, examples/,
 # reference documentation and source media used by templates tracked.
+
+# Downloaded third-party model binaries; retain catalog and project lock metadata
+/.model-cache/
+/model-assets/

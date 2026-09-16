@@ -1,4 +1,4 @@
-"""Portable generation groups. Editorial grouping and translation remain Codex work."""
+"""Portable generation groups. Editorial grouping and translation remain Assistant work."""
 import copy
 import math
 from pathlib import Path

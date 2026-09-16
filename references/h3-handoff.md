@@ -19,6 +19,10 @@
 
 当前自动交付报告固定 `target_h3_validated=false`，因为工具未接入另一台电脑。不得仅凭文件格式正确改成已通过 H3 验证。
 
+## 官方 skill 接入
+
+新任务先读 [官方 skill 接入](h3-official-skill.md)，记录媒体实际用途并选择模式，再编写或编译提示词。现有编译和分组同步会检查主体独立定义、保留说明和任务类型；通过只表示覆盖范围内结构合格。
+
 ## 分镜审核适配
 
 MiniMax-H3 是目标系统之一，按实际模式使用官方指南。Ref2VA 全参考改写参考 [官方指南](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/docs/VIDEO_PROMPT_WRITING_GUIDE_ref_en.md)：六部分是 subject_definitions、summary、retention_analysis、detailed_description、overall_soundscape、non_diegetic_music；描述使用英文，台词/歌词及画面文字保留原语言。镜头首段 [Shot 1] 不带切点，后续镜头采用 [Shot N] At MM:SS.mmm, ...。
@@ -29,7 +33,7 @@ MiniMax-H3 是目标系统之一，按实际模式使用官方指南。Ref2VA �
 
 ## 逐镜预演参考候选
 
-v0.5 可导出每镜纯摄影机 reference.mp4、审核 review.mp4 及串联版。仅纯摄影机文件作为模型参考候选；按实际目标接口限制选择或进一步细分，并保留父镜号和原片时间。独立文件不代表该段已符合所有 H3 输入条件。人物和场景美术来源于已确认真实基准，动作与摄影机参考预演；先小段验证再批量运行。
+v0.5 可导出每镜纯摄影机 reference.mp4、审核 review.mp4 及串联版。仅纯摄影机文件作为模型参考候选；按实际目标接口限制选择或进一步细分，并保留父镜号和原片时间。独立文件不代表该段已符合所有 H3 输入条件。人物和场景美术来源于已确认真实基准；预演只有经过相应用途审阅后才作为动作或摄影机参考，不能默认同时继承两者。先小段验证再批量运行。
 
 ## AIMixer 导演台
 

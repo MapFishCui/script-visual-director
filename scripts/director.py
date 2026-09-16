@@ -54,8 +54,10 @@ def inspect(shot):
 
 def signature(state):
     import review
-    return review.digest({'version': VERSION, 'system': state['system'],
-                          'shots': [[s['id'], s['revision'], s['zh'], s['target']] for s in state['shots']]})
+    context = {'version': VERSION, 'system': state['system'],
+               'shots': [[s['id'], s['revision'], s['zh'], s['target']] for s in state['shots']]}
+    if state.get('workflow') == 'layout-first-v1': context['spatial_context'] = review.spatial_context(state)
+    return review.digest(context)
 
 
 def ready(state, shot, context_hash=None, analysis_hash=None):
@@ -135,7 +137,8 @@ def apply(root, packet):
                 'analysis_hash': packet['analysis_hash'], 'sequence_note': packet['sequence_note'],
                 'checks': copy.deepcopy(u['checks']), 'at': review.now()}
             shot['approval'] = None
-        state['stages']['layout'] = state['stages']['previs'] = None
+        if state.get('workflow') != 'layout-first-v1': state['stages']['layout'] = None
+        state['stages']['previs'] = None
         review.record(state, 'director_review', [u['id'] for u in updates])
         review.save(root, state)
         return state

@@ -11,11 +11,11 @@
 <section class="workspace">
 <div class="shotHead"><div><span class="eyebrow" id="shotId"></span><h2 id="shotTitle"></h2></div><span id="shotStatus" class="tag"></span></div>
 <div class="columns">
-<section class="card"><div class="cardHead"><h3>中文导演稿</h3><span id="version"></span></div><p class="muted">正文只写三项：场景、镜头运动、人物运动。修改后保存，再回 Codex 说“同步修改”。中文是系统文本的依据。</p><form id="editor">
+<section class="card"><div class="cardHead"><h3>中文导演稿</h3><span id="version"></span></div><p class="muted" id="draftHelp">正文只写三项：场景、镜头运动、人物运动。修改后保存，再回当前对话说“同步修改”。中文是系统文本的依据。</p><form id="editor">
 <label>场景<textarea id="description" name="description" rows="5" maxlength="20000" placeholder="地点、环境状态、关键物件与人物起始位置" required></textarea></label>
 <label>镜头运动<textarea id="camera" name="camera" rows="2" maxlength="20000" placeholder="景别、机位、构图；固定或运动路径与速度，写明与人物动作的关系"></textarea></label>
 <label>人物运动<textarea id="action" name="action" rows="2" maxlength="20000" placeholder="正在经历什么 → 顺势行为与小动作 → 少量细微反应；含对应台词与语气，写明起止状态"></textarea></label>
-<details id="creativeNotes"><summary>创作依据与时长（内部拆解）</summary><p class="muted">旧稿保留原文，改标签不会自动整理内容；可回 Codex 说“整理为三项分镜”。</p>
+<details id="creativeNotes"><summary>创作依据与时长（内部拆解）</summary><p class="muted">旧稿保留原文，改标签不会自动整理内容；可回当前对话说“整理为三项分镜”。</p>
 <label>叙事目的<input id="purpose" name="purpose" maxlength="20000"></label>
 <div class="fieldRow"><label>时长（秒）<input id="duration" name="duration" type="number" min="0.001" max="3600" step="any" placeholder="待定"></label><label>景别与机位<input id="framing" name="framing" maxlength="20000" placeholder="如：面部特写"></label></div>
 <label>台词／旁白／画面文字<textarea id="dialogue" name="dialogue" rows="3" maxlength="20000" placeholder="需要逐字保留的文字；不制作配音"></textarea></label>
@@ -26,7 +26,7 @@
 <label>连续性约束<textarea id="continuity" name="continuity" rows="3" maxlength="20000"></textarea></label>
 </details>
 <div class="actions"><button id="save" type="submit">保存中文修改</button><button id="revert" type="button" class="secondary">撤销未保存修改</button></div><p id="saveState" class="muted">尚未修改</p></form><details id="recovery" hidden><summary>旧版本的未保存草稿（可复制后合并）</summary><pre id="recoveryText"></pre></details></section>
-<section class="card target"><div class="cardHead"><h3>目标系统文本</h3><span class="tag" id="targetState">待同步</span></div><p class="muted" id="targetHelp">系统文本由 Codex 编译，不在此处独立编辑。</p><h4>系统原文</h4><pre id="targetText" tabindex="0"></pre><h4>中文对照</h4><p class="muted">完整对应上方系统原文。调整导演意图请编辑左侧中文稿，再同步更新两份文本。</p><pre id="targetTranslation" class="translation" tabindex="0"></pre><div id="sources"></div><p id="targetNote" class="muted"></p><section aria-label="导演质量检查"><h4>节奏与人物检查</h4><div id="quality"></div></section><button id="approve">确认当前镜头</button><p class="muted">确认绑定当前导演稿、系统文本与导演检查；上下文改变后须重新检查。</p><details open><summary>依赖与连续性检查</summary><div id="impact"></div></details></section>
+<section class="card target"><div class="cardHead"><h3>目标系统文本</h3><span class="tag" id="targetState">待同步</span></div><p class="muted" id="targetHelp">系统文本由助手编译，不在此处独立编辑。</p><h4>系统原文</h4><pre id="targetText" tabindex="0"></pre><h4>中文对照</h4><p class="muted">完整对应上方系统原文。调整导演意图请编辑左侧中文稿，再同步更新两份文本。</p><pre id="targetTranslation" class="translation" tabindex="0"></pre><div id="sources"></div><p id="targetNote" class="muted"></p><section id="targetQuality" aria-label="导演质量检查"><h4>节奏与人物检查</h4><div id="quality"></div></section><button id="approve">确认当前镜头</button><p class="muted">确认绑定当前导演稿、系统文本与导演检查；上下文改变后须重新检查。</p><details open><summary>依赖与连续性检查</summary><div id="impact"></div></details></section>
 </div>
 <section class="card" id="generationGroups" aria-label="生成分组"></section>
 <section class="card"><div class="cardHead"><h3>版本对照</h3><label>对照版本 <select id="historySelect"></select></label></div><p class="muted">删除为红色，新增为绿色；版本历史保存在项目中。</p><div id="diff" class="diff"></div><div class="targetDiff"><h4>系统文本变化</h4><div class="compare"><pre id="oldTarget"></pre><pre id="newTarget"></pre></div></div></section>
