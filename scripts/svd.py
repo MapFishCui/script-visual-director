@@ -89,6 +89,8 @@ def review_layout(root, key, note, blockout=False):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    cmd = commands.add_parser("grid", help="Keyframe-grid workflow: init/register-item/validate/package/serve")
+    cmd.add_argument("grid_args", nargs=argparse.REMAINDER)
     cmd = commands.add_parser("init", help="Create an asset project, not a new skill")
     cmd.add_argument("project"); cmd.add_argument("--script", required=True); cmd.add_argument("--name", required=True)
     for name in ("validate", "queue"):
@@ -173,7 +175,11 @@ def main(argv=None):
     cmd=commands.add_parser('series-check');cmd.add_argument('project')
     args = parser.parse_args(argv)
     try:
-        if args.command.startswith('series-'):
+        if args.command == 'grid':
+            import grid_workflow
+            grid_workflow.main(args.grid_args)
+            return 0
+        elif args.command.startswith('series-'):
             import series
             if args.command=='series-init': result=series.initialize(args.library,args.name)
             elif args.command=='series-list': result=series.catalog(args.library)

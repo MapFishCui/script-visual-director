@@ -53,6 +53,9 @@ def load(root):
 
 
 def publish(project,library,episode,asset_ids):
+    if (Path(project)/'grid-workflow.json').is_file():
+        import grid_series
+        return grid_series.publish(project,library,episode,asset_ids)
     identifier(episode)
     if not asset_ids or len(set(asset_ids))!=len(asset_ids): raise ValueError('选择非空且不重复的入库资产')
     if Path(project).resolve()==Path(library).resolve(): raise ValueError('共享库与单集项目必须分开')
@@ -107,6 +110,9 @@ def records(project):
 
 
 def inherit(project,library,plan):
+    if (Path(project)/'grid-workflow.json').is_file():
+        import grid_series
+        return grid_series.inherit(project,library,plan)
     if set(plan)!={'episode','items'} or not isinstance(plan['items'],list) or not plan['items']:
         raise ValueError('继承方案需要 episode 与非空 items')
     identifier(plan['episode'])
@@ -143,6 +149,7 @@ def inherit(project,library,plan):
                 if old['type']!=record['type']: raise ValueError('目标资产类型不符')
             if initialized and (old is None or any(tid not in shots[s]['assets'] for s in item['shots'])):
                 raise ValueError('已开启审核：先在本集声明待生成资产及镜号引用，再继承；不覆盖审核分镜')
+            if entry['snapshot'].get('kind')=='grid-character': raise ValueError('九宫格人物合套版本不能作为旧流程单图继承')
             source_asset=entry['snapshot']['asset'];source_v=next(v for v in source_asset['versions'] if v['version']==entry['source_asset_version'])
             v=copy.deepcopy(source_v);v['version']=current(old)['version'] if old else 1
             v['dependencies']=copy.deepcopy(current(old)['dependencies']) if old else []
@@ -194,6 +201,9 @@ def inherit(project,library,plan):
 
 
 def verify(project):
+    if (Path(project)/'grid-workflow.json').is_file():
+        import grid_series
+        return grid_series.verify(project)
     errors=[]
     try:
         assets=indexed(load_project(project)['assets'])

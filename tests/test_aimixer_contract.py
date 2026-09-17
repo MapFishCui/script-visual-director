@@ -68,6 +68,18 @@ class AIMixerContract(unittest.TestCase):
             self.assertEqual(merged['timeline']['output']['exportMode'],'all')
             self.assertEqual(sum(t['frameCount'] for t in merged['timeline']['segments']),
                              sum(group_package.aligned_frames(sec) for sec in [13,14,14,12]))
+            # The new grid adapter must also round-trip through this real importer.
+            import test_grid_delivery, grid_delivery
+            grid_root=case.base/'grid-project';test_grid_delivery.fixture(grid_root)
+            grid_pack=case.base/'grid.mmxpack.zip';grid_delivery.package(grid_root,grid_pack,'aimixer-h3')
+            grid_extract=case.base/'grid-extracted';module.extract_pack_zip(grid_pack,grid_extract)
+            grid_result=module.import_extracted_pack(grid_extract)
+            self.assertEqual(grid_result['missing'],[])
+            self.assertEqual([t['id'] for t in grid_result['timeline']['segments']],['T1','T2'])
+            for segment in grid_result['timeline']['segments']:
+                self.assertEqual([r['index'] for r in segment['refs']],[0,1])
+                for ref in segment['refs']:self.assertTrue((input_dir/ref['imageFile']).is_file())
+
 
 
 

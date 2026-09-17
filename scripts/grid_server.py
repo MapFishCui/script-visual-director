@@ -9,10 +9,13 @@ import grid_workflow as grid
 WEB=Path(__file__).resolve().parents[1]/'assets/grid-review'
 
 def view(root):
-    state=json.loads((root/'grid-workflow.json').read_text())
+    state=json.loads((root/'grid-workflow.json').read_text(encoding='utf-8'))
     rows={}
     for stage,row in state['stages'].items():
         rows[stage]={**row,'artifacts':[]}
+        if 'items' in row:
+            from grid_items import condition
+            rows[stage]['item_status']={key:condition(root,state,stage+'/'+key) for key in row['items']}
         for name in row['files']:
             try:
                 p=safe_path(root,name); entry={'path':name,'exists':p.is_file()}
@@ -29,7 +32,7 @@ def view(root):
 
 def make_server(root,port=0,token=None):
     root=Path(root).resolve(); token=token or secrets.token_urlsafe(32)
-    if json.loads((root/'grid-workflow.json').read_text()).get('workflow')!='keyframe-grid-v1':raise ValueError('Wrong workflow')
+    if json.loads((root/'grid-workflow.json').read_text(encoding='utf-8')).get('workflow')!='keyframe-grid-v1':raise ValueError('Wrong workflow')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*args):pass
         def send(self,data,mime='application/json',status=200):
@@ -53,9 +56,13 @@ def make_server(root,port=0,token=None):
                 self.auth(query=path=='/api/file')
                 with locked(root):
                     if path=='/api/state':self.send(view(root));return
+                    if path=='/api/validate':
+                        from grid_delivery import inspect
+                        report=inspect(root);report.pop('compiled',None)
+                        self.send(report);return
                     if path=='/api/file':
                         name=parse_qs(urlsplit(self.path).query).get('path',[''])[0]
-                        state=json.loads((root/'grid-workflow.json').read_text())
+                        state=json.loads((root/'grid-workflow.json').read_text(encoding='utf-8'))
                         if name not in {f for row in state['stages'].values() for f in row['files']}:raise ValueError('File not registered')
                         p=safe_path(root,name);mime=mimetypes.guess_type(name)[0] or 'application/octet-stream'
                         if p.suffix.lower() not in ('.png','.jpg','.jpeg','.webp'):mime='text/plain; charset=utf-8' if p.suffix.lower() in ('.md','.txt','.json') else 'application/octet-stream'
@@ -70,17 +77,21 @@ def make_server(root,port=0,token=None):
                 size=int(self.headers.get('Content-Length','0'))
                 if not 0<size<=1024*1024:raise ValueError('Invalid payload size')
                 data=json.loads(self.rfile.read(size));path=urlsplit(self.path).path
-                fields={'/api/confirm':{'revision','stage'},'/api/edit':{'revision','stage','file','text'},'/api/feedback':{'revision','stage','text'}}
+                fields={'/api/confirm':{'revision','stage'},'/api/edit':{'revision','stage','file','text'},'/api/feedback':{'revision','stage','text'},'/api/confirm-item':{'revision','stage','item'},'/api/feedback-item':{'revision','stage','item','text'}}
                 if not isinstance(data,dict) or path not in fields or set(data)!=fields[path]:raise ValueError('Unexpected request fields')
                 with locked(root):
                     if data.get('revision')!=view(root)['revision']:raise ValueError('页面已有更新，请保留编辑并刷新后合并')
                     if not isinstance(data,dict):raise ValueError('Object required')
                     stage=data['stage']
                     if stage not in grid.STAGES:raise ValueError('Invalid stage')
-                    if path=='/api/confirm':grid._run(root,'confirm',stage,evidence='用户在审核网页确认当前版本：'+stage)
+                    if path in ('/api/confirm-item','/api/feedback-item'):
+                        from grid_items import change
+                        command='confirm-item' if path=='/api/confirm-item' else 'feedback-item'
+                        change(root,command,stage,data['item'],evidence=('用户在审核网页确认当前项：'+data['item']) if command=='confirm-item' else data['text'],_locked=True)
+                    elif path=='/api/confirm':grid._run(root,'confirm',stage,evidence='用户在审核网页确认当前版本：'+stage)
                     elif path=='/api/edit':
                         if stage!='director':raise ValueError('仅中文导演稿可直接编辑；其他阶段请提交修改意见')
-                        state=json.loads((root/'grid-workflow.json').read_text());name=data['file']
+                        state=json.loads((root/'grid-workflow.json').read_text(encoding='utf-8'));name=data['file']
                         if name not in state['stages']['director']['files'] or Path(name).suffix.lower() not in ('.md','.txt'):raise ValueError('Not an editable director file')
                         if not isinstance(data['text'],str) or not data['text'].strip():raise ValueError('导演稿不能为空')
                         p=safe_path(root,name)
@@ -90,7 +101,8 @@ def make_server(root,port=0,token=None):
                         grid._run(root,'register','director',state['stages']['director']['files'])
                     elif path=='/api/feedback':
                         if not isinstance(data.get('text'),str) or not data['text'].strip():raise ValueError('修改意见不能为空')
-                        state=json.loads((root/'grid-workflow.json').read_text());row=state['stages'][stage]
+                        state=json.loads((root/'grid-workflow.json').read_text(encoding='utf-8'));row=state['stages'][stage]
+                        if 'items' in row:raise ValueError('逐项模式请对具体人物或任务提交修改意见')
                         state.setdefault('history',[]).append({'command':'feedback','stage':stage,'text':data['text'],'previous_approval':row.get('approval')})
                         row['feedback']=data['text'];row['needs_revision']=True
                         for key in grid.STAGES[grid.STAGES.index(stage):]:

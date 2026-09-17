@@ -1,5 +1,7 @@
 import json,tempfile,threading,unittest,urllib.request,urllib.error
 from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import grid_workflow as grid
 import grid_server
 
@@ -38,3 +40,16 @@ class GridServerTests(unittest.TestCase):
   self.assertEqual(self.request('/api/file?path=grid-workflow.json')[0],409)
   self.assertEqual(self.request('/api/file?path=director.md')[0],200)
   self.assertEqual(self.request('/api/file?path=../outside')[0],409)
+
+ def test_item_api_and_delivery_check(self):
+  import grid_items
+  grid.run(self.root,'confirm','director',evidence='synthetic test')
+  (self.root/'character.txt').write_text('synthetic only',encoding='utf-8')
+  grid_items.change(self.root,'register-item','characters','C1',['character.txt'])
+  s=self.state();self.assertEqual(s['stages']['characters']['item_status']['C1'],'awaiting_confirmation')
+  code,_=self.request('/api/confirm-item',{'revision':s['revision'],'stage':'characters','item':'C1'})
+  self.assertEqual(code,200)
+  self.assertEqual(self.request('/api/feedback-item',{'revision':s['revision'],'stage':'characters','item':'C1','text':'stale'})[0],409)
+  s=self.state();self.assertEqual(self.request('/api/feedback-item',{'revision':s['revision'],'stage':'characters','item':'C1','text':'actual synthetic feedback'})[0],200)
+  s=self.state();self.assertEqual(self.request('/api/confirm-item',{'revision':s['revision'],'stage':'characters','item':'C1'})[0],409)
+  report=json.loads(self.request('/api/validate')[1]);self.assertFalse(report['ok']);self.assertTrue(report['errors'])

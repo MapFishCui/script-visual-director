@@ -18,6 +18,11 @@ def status(root, state):
     result = {}
     for stage in STAGES:
         row = state['stages'].get(stage)
+        if row and 'items' in row:
+            from grid_items import condition
+            result[stage] = condition(root, state, stage)
+            ready = result[stage] == 'confirmed'
+            continue
         current = False
         if row:
             try: current = row['hashes'] == fingerprint(root, row['files'])
@@ -50,12 +55,14 @@ def _run(root, command, stage=None, files=None, evidence=None):
         root.mkdir(parents=True, exist_ok=True)
         state={'workflow':'keyframe-grid-v1','name':root.name,'stages':{}}
     else:
-        state=json.loads(path.read_text())
+        state=json.loads(path.read_text(encoding='utf-8'))
         if state.get('workflow')!='keyframe-grid-v1': raise ValueError('Wrong workflow')
         previous = copy.deepcopy(state['stages'])
         if command in ('register','confirm'):
             index=STAGES.index(stage)
             if any(status(root,state)[s]!='confirmed' for s in STAGES[:index]): raise ValueError('Confirm current upstream versions first')
+            if state['stages'].get(stage, {}).get('items') is not None:
+                raise ValueError('逐项模式请使用 register-item / confirm-item')
             if command=='register':
                 if not files or len(set(files))!=len(files): raise ValueError('Provide unique real files')
                 if any(Path(f).is_absolute() or f in ('index.html','grid-workflow.json') for f in files): raise ValueError('Use project-relative artifact paths')
@@ -63,7 +70,7 @@ def _run(root, command, stage=None, files=None, evidence=None):
                 if any(safe_path(root,f) in reserved for f in files):
                     raise ValueError('Workflow state and page cannot be stage artifacts')
                 hashes=fingerprint(root,files)
-                state['stages'][stage]={'files':files,'hashes':hashes,'approval':None}
+                state['stages'][stage]={'files':files,'hashes':hashes,'approval':None,'version':previous.get(stage, {}).get('version', 0) + 1}
             else:
                 if not evidence or not evidence.strip(): raise ValueError('Actual user confirmation evidence required')
                 row=state['stages'].get(stage)
@@ -92,14 +99,36 @@ def run(root, command, stage=None, files=None, evidence=None):
         return _run(root, command, stage, files, evidence)
 
 
-if __name__=='__main__':
+def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('command',choices=['init','register','confirm','status','serve']);p.add_argument('project')
+    p.add_argument('command',choices=['init','register','confirm','status','serve','validate','package','register-item','confirm-item','feedback-item']);p.add_argument('project')
     p.add_argument('--stage',choices=STAGES);p.add_argument('--files',nargs='+');p.add_argument('--evidence');p.add_argument('--port',type=int,default=0)
-    a=p.parse_args()
+    p.add_argument('--item');p.add_argument('--depends',nargs='*');p.add_argument('--output');p.add_argument('--adapter',choices=['generic','aimixer-h3'],default='generic');p.add_argument('--draft',action='store_true')
+    a=p.parse_args(argv)
     if a.command in ('register','confirm') and not a.stage:p.error('--stage required')
+    if a.command in ('register-item','confirm-item','feedback-item'):
+        if not a.stage or not a.item:p.error('--stage and --item required')
+        from grid_items import change
+        change(a.project,a.command,a.stage,a.item,a.files,a.depends,a.evidence)
+        print(json.dumps(run(a.project,'status'),ensure_ascii=False,indent=2))
+        raise SystemExit(0)
+    if a.command in ('validate','package'):
+        import grid_delivery
+        if a.command=='package' and not a.output:p.error('--output required')
+        result=grid_delivery.validate(a.project) if a.command=='validate' else grid_delivery.package(a.project,a.output,a.adapter,a.draft)
+        print(json.dumps(result,ensure_ascii=False,indent=2))
+        raise SystemExit(0 if result.get('ok',True) else 1)
     if a.command=='serve':
         from grid_server import serve
         serve(a.project,a.port)
         raise SystemExit(0)
     print(json.dumps(run(a.project,a.command,a.stage,a.files,a.evidence),ensure_ascii=False,indent=2))
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        import sys
+        print(json.dumps({'error': str(exc)}, ensure_ascii=False), file=sys.stderr)
+        raise SystemExit(2)
