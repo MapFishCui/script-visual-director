@@ -82,7 +82,14 @@ def validate(spec):
     return spec
 
 
+def require_imported_characters(spec):
+    if any(c.get("type") == "actor" for c in spec["components"]):
+        raise ValueError("人物必须使用官网成品模型（type=asset, category=actor）；禁止组件人物，包括调度代理")
+    return spec
+
+
 def materialize(spec,project,out):
+    require_imported_characters(spec)
     import copy,model_library
     spec=copy.deepcopy(spec);project=Path(project).resolve();out=Path(out).resolve()
     rows=[c for c in spec['components'] if c['type']=='asset']
@@ -101,7 +108,7 @@ def materialize(spec,project,out):
 
 
 def build_scene(spec_path,output,explicit=None):
-    spec=validate(read_json(spec_path));out=Path(output).resolve()
+    spec=require_imported_characters(validate(read_json(spec_path)));out=Path(output).resolve()
     if out.exists():raise ValueError('输出目录已存在，请使用新目录保留旧版')
     out.mkdir(parents=True);spec=materialize(spec,Path(spec_path).resolve().parent,out);write_json(out/'scene-spec.json',spec)
     for file in KIT.glob('*.py'):shutil.copy2(file,out/file.name)
@@ -116,7 +123,7 @@ def bind_blocking(root,spec_relative,layout_relative):
     import review
     state=review.load_state(root);previs.require_layout(root,state,phase='blocking')
     if state['blocking']['required'] is not True:raise ValueError('先记录用户生成整场白模的选择')
-    spec=validate(read_json(safe_path(root,spec_relative)))
+    spec=require_imported_characters(validate(read_json(safe_path(root,spec_relative))))
     if not spec.get('beats'):raise ValueError('用于整场预演的组件场景需要 beats')
     source=safe_path(root,layout_relative)
     if layout_relative not in {l['path'] for l in load_project(root)['layouts']}:raise ValueError('布局尚未登记')
