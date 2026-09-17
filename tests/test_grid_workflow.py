@@ -23,3 +23,22 @@ class GridWorkflowTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as d:
    p=Path(d)/'p';run(p,'init')
    with self.assertRaises(ValueError):run(p,'register','director',['../outside'])
+
+ def test_reconfirmation_preserves_downstream_and_history(self):
+  import json
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'p';run(p,'init')
+   for stage in STAGES:
+    (p/(stage+'.txt')).write_text(stage)
+    run(p,'register',stage,[stage+'.txt'])
+    run(p,'confirm',stage,evidence='original confirmation')
+   before=json.loads((p/'grid-workflow.json').read_text())
+   self.assertTrue(before['history'])
+   result=run(p,'confirm','director',evidence='repeat')
+   self.assertEqual(result['stages']['prompts'],'confirmed')
+   self.assertEqual(json.loads((p/'grid-workflow.json').read_text()),before)
+ def test_symlink_to_state_is_not_an_artifact(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d)/'p';run(p,'init')
+   (p/'alias.json').symlink_to(p/'grid-workflow.json')
+   with self.assertRaises(ValueError):run(p,'register','director',['alias.json'])
