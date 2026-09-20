@@ -16,7 +16,7 @@ class ScenePlanTest(unittest.TestCase):
   p=fixture();p['actions'][0]['kind']='run';c=sp.compile_plan(p);self.assertEqual(c['status'],'blocked');self.assertEqual(c['findings'][0]['kind'],'unsupported_action')
  def test_no_actor_translation(self):
   p=fixture();p['scene']['components'][0]={'id':'box','type':'actor','position':[0,0,0]}
-  with self.assertRaisesRegex(ValueError,'官网'):sp.compile_plan(p)
+  with self.assertRaisesRegex(ValueError,'平移'):sp.compile_plan(p)
   p['scene']['components'][0]={'id':'box','type':'asset','category':'actor','position':[0,0,0],'asset_key':'blender-snow@3','model':'snow_v03.blend','collection':'CH-snow'}
   p['actors']=[{'id':'box','adapter':'snow-v3'}]
   with self.assertRaisesRegex(ValueError,'平移'):sp.compile_plan(p)

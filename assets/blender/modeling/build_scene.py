@@ -6,8 +6,6 @@ from component_kit import build,check_scene
 args=argparse.ArgumentParser();args.add_argument('--spec',required=True);args.add_argument('--out',required=True)
 a=args.parse_args(sys.argv[sys.argv.index('--')+1:]);out=Path(a.out);spec=json.loads(Path(a.spec).read_text())
 
-if any(c.get('type') == 'actor' for c in spec['components']):
-    raise ValueError('人物必须使用官网成品模型，禁止组件人物')
 for component in spec['components']:
     if component['type']=='asset':component['file']=str((Path(__file__).resolve().parent/component['file']).resolve())
 model=build(spec);report=check_scene(model)

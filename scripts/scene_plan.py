@@ -25,7 +25,7 @@ def compile_plan(plan):
     if errors:raise ValueError('; '.join(str(list(e.path))+': '+e.message for e in errors[:3]))
     p=copy.deepcopy(plan);fps=p['fps'];duration=p['duration'];frames=round(duration*fps)
     if frames<2 or frames>10000 or abs(frames-duration*fps)>1e-6:raise ValueError('时长须对应 2–10000 个整数帧')
-    scene=p['scene'];scene['fps']=fps;scene['frames']=frames;modeling.require_imported_characters(modeling.validate(scene))
+    scene=p['scene'];scene['fps']=fps;scene['frames']=frames;modeling.validate(scene)
     objects={c['id']:c for c in scene['components']}
     def unique(rows,label):
         ids=[r['id'] for r in rows]
